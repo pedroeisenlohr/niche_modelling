@@ -9,16 +9,16 @@
 
 
 ###################### Acknowledgments ##########################
-### Dr. Guarino Colli's team of Universidade de Brasília.
-### Dr. Diogo Souza Bezerra Rocha (Instituto de Pesquisas Jardim Botânico/RJ).
-### Drª Marinez Ferreira de Siqueira (Instituto de Pesquisas Jardim Botânico/RJ).
-### My students of Ecology Lab (http://pedroeisenlohr.webnode.com.br/laboratorio-de-ecologia/).
+### Dr. Guarino Colli's team of Universidade de BrasÃ­lia.
+### Dr. Diogo Souza Bezerra Rocha (Instituto de Pesquisas Jardim BotÃ¢nico/RJ).
+### DrÂª Marinez Ferreira de Siqueira (Instituto de Pesquisas Jardim BotÃ¢nico/RJ).
+### My students of Ecology Lab - LabEc/UNEMAT (http://pedroeisenlohr.webnode.com.br/laboratorio-de-ecologia/).
 
 
 
 
 ###########################################################################################################################################################
-####### Environmental data source 
+####### Environmental data source ##########
 ## Temperature and precipitation, solar radiation, water vapor pressure and wind speed: WorldClim 2.0 (http://worldclim.org/version2).
 ## PET and Aridity Index: Global Aridity and PET Database (http://www.cgiar-csi.org/data/global-aridity-and-pet-database)
 ## AET and Soil Water Stress: Global High-Resolution Soil-Water Balance (http://www.cgiar-csi.org/data/global-high-resolution-soil-water-balance#download).
@@ -94,7 +94,7 @@ edit(presvals)
 
 ## Crop WorldClim layers
 #  *********************
-neotrop <- readOGR("./ShapeNeo/neotrpic_mex_contorno.shp")
+neotrop <- readOGR("./ShapeNeo/neotropic.shp")
 bio.wc2 <- mask(crop(bio,neotrop),neotrop)
 bio.wc2
 res(bio.wc2)
@@ -301,7 +301,7 @@ bio.crop
 
 
 #################################################################
-##################### PCA #######################################
+################# Performing PCA ################################
 #################################################################
 
 env.selected1 <- rasterPCA(bio.crop, nComp=7, spca = TRUE)
@@ -334,7 +334,7 @@ occurrence.resp <-  rep(1, length(myRespXY$long))
 
 
 #################################################
-## BUILDING SPECIES DISTRIBUTION MODELS - SDMs ##
+############# BUILDING NICHE MODELS #############
 #################################################
 
 ### for example, number of species occurrence records = 93
@@ -361,7 +361,7 @@ sppBiomodData.PA.10000 <- BIOMOD_FormatingData(
 	PA.sre.quant = 0.025)
 sppBiomodData.PA.10000
 
-
+# Downloading MAXENT software
 # MaxEnt .jar
   jar <- paste0(system.file(package = "dismo"), "/java/maxent.jar")
   if (file.exists(jar) != T) {
@@ -369,7 +369,7 @@ sppBiomodData.PA.10000
     download.file(url, dest = "maxent.zip", mode = "wb")
     unzip("maxent.zip", files = "maxent.jar", exdir = system.file("java", package = "dismo"))
     unlink("maxent.zip")
-    warning("Maxent foi colocado no diretório")
+    warning("Maxent foi colocado no diretÃ³rio")
   } 
 system.file("java", package = "dismo")
 
@@ -377,7 +377,7 @@ system.file("java", package = "dismo")
 myBiomodOption <- BIOMOD_ModelingOptions(MAXENT.Phillips = list(path_to_maxent.jar="C:/Users/R/win-library/3.3/dismo/java"))
 
 
-# In this case, 70% of data will be used to train and 30% will be used to test the model:
+# Here, 70% of data will be used to train and 30% will be used to test the model (see DataSplit):
 sppModelOut.PA.equal <- BIOMOD_Modeling(sppBiomodData.PA.equal, 
 	models = c("GBM", "CTA", "RF"), 
 	NbRunEval = 10,
@@ -499,6 +499,7 @@ names(summary.eval.10000) <- c("Model", "Method", "SD")
 summary.eval.10000
 write.table(summary.eval.10000,"Models2_Evaluation_SD.csv")
 
+
 ### Which algorithms should be retained for the ensemble model?
 
 
@@ -525,12 +526,12 @@ spp.projections_2 <- BIOMOD_Projection(
 
 
 # Stack projections
-### You should define where is the file 'proj_Cur1_Occurrence.grd'
-projections_cont1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence.grd") #onde estão os modelos produzidos por GBM, CTA e RF
+### You should define the path to the file 'proj_Cur1_Occurrence.grd'
+projections_cont1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence.grd") #onde estÃ£o os modelos produzidos por GBM, CTA e RF
 names(projections_cont1)
 
-### You should define where is the file 'proj_Cur1_Occurrence_ROCbin.grd'
-projections_bin1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence_ROCbin.grd") #onde estão os modelos produzidos por GBM, CTA e RF
+### You should define the step to the file 'proj_Cur1_Occurrence_ROCbin.grd'
+projections_bin1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence_ROCbin.grd") #onde estÃ£o os modelos produzidos por GBM, CTA e RF
 names(projections_bin1)
 
 names(projections_bin1)=names(projections_cont1)
@@ -538,19 +539,20 @@ names(projections_bin1)
 plot(projections_bin1)
 
 
-### You should define where is the file 'proj_Cur2_Occurrence.grd'
-projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence.grd") #onde estão os modelos produzidos pelos demais algoritmos
+### You should define the path to the file 'proj_Cur2_Occurrence.grd'
+projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence.grd") #onde estÃ£o os modelos produzidos pelos demais algoritmos
 names(projections_cont2)
 
-### You should define where is the file 'proj_Cur2_Occurrence_ROCbin.grd'
-projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence_ROCbin.grd") #onde estão os modelos produzidos pelos demais algoritmos
+### You should define the path to the file 'proj_Cur2_Occurrence_ROCbin.grd'
+projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence_ROCbin.grd") #onde estÃ£o os modelos produzidos pelos demais algoritmos
 names(projections_bin2)
 
 names(projections_cont2)=names(projections_bin2)
 plot(projections_cont2)
 
 
-### Apply the steps below only for retained algorithms
+### Apply the steps below only for the retained algorithms
+
 ### Ensemble mean model for each algorithm:
 projections.RF.all <- subset(projections_bin1, grep("RF", names(projections_bin1)))
 projections.RF.mean <- mean(projections.RF.all)
