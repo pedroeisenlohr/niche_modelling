@@ -154,6 +154,9 @@ plot(wind.speed.max)
 res(wind.speed.min)
 plot(wind.speed.min)
 
+## I am assuming that you have obtained the above variables at ~10-km resolution.
+## As the below ones are available at low ~1-km resolution, standardizations are required (see "resample" function below).
+
 
 #Potential Evapotranspiration:
 PET.1km <- raster("./Global Aridity and PET database/Global PET - Annual/PET_he_annual/pet_he_yr/w001001.adf")
@@ -334,6 +337,9 @@ occurrence.resp <-  rep(1, length(myRespXY$long))
 #################################################
 ############# BUILDING NICHE MODELS #############
 #################################################
+
+### You are strongly invited to read all "biomod2" manuals, tutorials and vignettes before 
+### using the next commands.
 
 ### for example, number of species occurrence records = 93
 # Prepare data
