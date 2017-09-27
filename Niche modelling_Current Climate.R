@@ -1,6 +1,6 @@
 ########################################################################################
 ########################################################################################
-### NICHE MODELLING WITH BIOMOD2 USING 40 ENVIRONMENTAL VARIABLES (10-km RESOLUTION) ###  
+###            NICHE MODELLING WITH BIOMOD2 USING 40 ENVIRONMENTAL VARIABLES         ###  
 ########################################################################################
 ########################################################################################
 
@@ -505,6 +505,10 @@ write.table(summary.eval.10000,"Models2_Evaluation_SD.csv")
 #################################
 ## PRODUCING MODEL PROJECTIONS ##
 #################################
+
+### Here we are suggesting the ROC threshold to be used to project binary maps. 
+### ROC threshold corresponds to "Maximum Sensitivity Plus Specificity" threshold,
+### largely recommended when the focus of niche modelling relies on conservation issues.
 
 spp.projections_1 <- BIOMOD_Projection(
 	modeling.output = sppModelOut.PA.equal,
