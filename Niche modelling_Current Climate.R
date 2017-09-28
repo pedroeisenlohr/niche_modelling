@@ -162,6 +162,9 @@ plot(wind.speed.min)
 PET.1km <- raster("./Global Aridity and PET database/Global PET - Annual/PET_he_annual/pet_he_yr/w001001.adf")
 PET.1km <- mask(crop(PET.1km,neotrop),neotrop)
 PET.10km <- resample(PET.1km,bio.wc2)
+writeRaster(PET.10km, "PET10km")
+### To avoid this time-consuming step, at the next time you can just call this file:
+### PET.10km <-raster("./PET10km.grd")
 res(PET.10km)
 plot(PET.10km)
 
@@ -170,6 +173,9 @@ plot(PET.10km)
 Aridity.1km <- raster("./Global Aridity and PET database/Global Aridity - Annual/AI_annual/ai_yr/w001001.adf")
 Aridity.1km <- mask(crop(Aridity.1km,neotrop),neotrop)
 Aridity.10km <- resample(Aridity.1km,bio.wc2)
+writeRaster(Aridity.10km, "Aridity10km")
+### To avoid this time-consuming step, at the next time you can just call this file:
+### Aridity.10km <-raster("./Aridity10km")
 res(Aridity.10km)
 plot(Aridity.10km)
 
@@ -178,6 +184,9 @@ plot(Aridity.10km)
 AET.1km <- raster("./Global Soil Water Balance and AET/Mean Annual AET/AET_YR/aet_yr/w001001.adf")
 AET.1km <- mask(crop(AET.1km,neotrop),neotrop)
 AET.10km <- resample(AET.1km,bio.wc2)
+writeRaster(AET.10km, "AET10km")
+### To avoid this time-consuming step, at the next time you can just call this file:
+### AET.10km <-raster("./AET10km")
 res(AET.10km)
 plot(AET.10km)
 
@@ -201,18 +210,27 @@ SWS.stack <-stack(SWS.jan,SWS.feb,SWS.mar,SWS.apr,SWS.may,SWS.jun,SWS.jul,
 SWS.mean.1km <-mean(SWS.stack)
 SWS.mean.1km <-mask(crop(SWS.mean.1km,neotrop),neotrop)
 SWS.mean.10km <-resample(SWS.mean.1km, bio.wc2)
+writeRaster(SWS.mean.10km,"SWSmean10km")
+### To avoid this time-consuming step, at the next time you can just call this file:
+### SWS.mean.10km <-raster("./SWSmean10km")
 res(SWS.mean.10km)
 plot(SWS.mean.10km)
 
 SWS.min.1km <-min(SWS.stack)
 SWS.min.1km <-mask(crop(SWS.min.1km,neotrop),neotrop)
 SWS.min.10km <-resample(SWS.min.1km, bio.wc2)
+writeRaster(SWS.min.10km,"SWSmin10km")
+### To avoid this time-consuming step, at the next time you can just call this file:
+### SWS.min.10km <-raster("./SWSmin10km")
 res(SWS.min.10km)
 plot(SWS.min.10km)
 
 SWS.max.1km <-max(SWS.stack)
 SWS.max.1km <-mask(crop(SWS.max.1km,neotrop),neotrop)
 SWS.max.10km <-resample(SWS.max.1km, bio.wc2)
+writeRaster(SWS.max.10km,"SWSmax10km")
+### To avoid this time-consuming step, at the next time you can just call this file:
+### SWS.max.10km <-raster("./SWSmax10km")
 res(SWS.max.10km)
 plot(SWS.max.10km)
 
