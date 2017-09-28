@@ -353,7 +353,7 @@ occurrence.resp <-  rep(1, length(myRespXY$long))
 ## BUILDING SPECIES DISTRIBUTION MODELS - SDMs ##
 #################################################
 
-setwd("C:/Modelos Dennis_2.0")
+setwd("C:/Models")
 
 ### for example, number of species occurrence records = 93
 # Prepare data
