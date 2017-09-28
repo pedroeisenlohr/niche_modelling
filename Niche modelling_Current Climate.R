@@ -1,8 +1,8 @@
-########################################################################################
-########################################################################################
-###            NICHE MODELLING WITH BIOMOD2 USING 40 ENVIRONMENTAL VARIABLES         ###  
-########################################################################################
-########################################################################################
+#################################################################################################
+#################################################################################################
+####### NICHE MODELLING WITH BIOMOD2 USING  40 ENVIRONMENTAL VARIABLES (10-km RESOLUTION) ####### 
+#################################################################################################
+#################################################################################################
 
 
 
@@ -10,17 +10,17 @@
 ### Dr. Guarino Colli's team of Universidade de Brasília.
 ### Dr. Diogo Souza Bezerra Rocha (Instituto de Pesquisas Jardim Botânico/RJ).
 ### Drª Marinez Ferreira de Siqueira (Instituto de Pesquisas Jardim Botânico/RJ).
-### My students of Ecology Lab - LabEc/UNEMAT (http://pedroeisenlohr.webnode.com.br/laboratorio-de-ecologia/).
+### My students of Ecology Lab (http://pedroeisenlohr.webnode.com.br/laboratorio-de-ecologia/).
 
 
 
 
 ###########################################################################################################################################################
-####### Environmental data source ##########
+####### Environmental data source 
 ## Temperature and precipitation, solar radiation, water vapor pressure and wind speed: WorldClim 2.0 (http://worldclim.org/version2).
 ## PET and Aridity Index: Global Aridity and PET Database (http://www.cgiar-csi.org/data/global-aridity-and-pet-database)
 ## AET and Soil Water Stress: Global High-Resolution Soil-Water Balance (http://www.cgiar-csi.org/data/global-high-resolution-soil-water-balance#download).
-## Relative Umidity: Climond (https://www.climond.org/RawClimateData.aspx).
+## Relative Humidity: Climond (https://www.climond.org/RawClimateData.aspx).
 ###########################################################################################################################################################
 
 
@@ -81,7 +81,7 @@ edit(spp)
 ### Loading WorldClim 2.0 layers ###
 ###################################################################
 
-bioclim <- list.files("./wc5 2.0", full.names=TRUE)
+bioclim <- list.files("./Environmental layers/wc5 2.0", full.names=TRUE)
 bio <-stack(bioclim)
 plot(bio[[1]])
 
@@ -92,7 +92,7 @@ edit(presvals)
 
 ## Crop WorldClim layers
 #  *********************
-neotrop <- readOGR("./ShapeNeo/neotropic.shp")
+neotrop <- readOGR("./Shapefiles/ShapeNeo/neotrpic_mex_contorno.shp")
 bio.wc2 <- mask(crop(bio,neotrop),neotrop)
 bio.wc2
 res(bio.wc2)
@@ -105,7 +105,7 @@ names(bio.wc2)
 ####################################################################
 
 #Solar Radiation:
-solar.radiation <- list.files("./Solar Radiation", pattern=".tif", full.names=TRUE)
+solar.radiation <- list.files("./Environmental layers/Solar Radiation", pattern=".tif", full.names=TRUE)
 solar.radiation <- stack(solar.radiation)
 solar.radiation.mean <- mean(solar.radiation)
 solar.radiation.max <- max(solar.radiation)
@@ -122,7 +122,7 @@ plot(solar.radiation.min)
 
 
 #Water Vapor Pressure:
-water.vapor.pressure <- list.files("./Water Vapor Pressure", pattern=".tif", full.names=TRUE)
+water.vapor.pressure <- list.files("./Environmental layers/Water Vapor Pressure", pattern=".tif", full.names=TRUE)
 water.vapor.pressure <-stack(water.vapor.pressure)
 water.vapor.pressure.mean <-mean(water.vapor.pressure)
 water.vapor.pressure.max <-max(water.vapor.pressure)
@@ -139,7 +139,7 @@ plot(water.vapor.pressure.min)
 
 
 #Wind Speed:
-wind.speed <- list.files("./Wind Speed", pattern=".tif", full.names=TRUE)
+wind.speed <- list.files("./Environmental layers/Wind Speed", pattern=".tif", full.names=TRUE)
 wind.speed <- stack(wind.speed)
 wind.speed.mean <-mean(wind.speed)
 wind.speed.max <-max(wind.speed)
@@ -154,56 +154,53 @@ plot(wind.speed.max)
 res(wind.speed.min)
 plot(wind.speed.min)
 
-## I am assuming that you have obtained the above variables at ~10-km resolution.
-## As the below ones are available at low ~1-km resolution, standardizations are required (see "resample" function below).
-
 
 #Potential Evapotranspiration:
-PET.1km <- raster("./Global Aridity and PET database/Global PET - Annual/PET_he_annual/pet_he_yr/w001001.adf")
+PET.1km <- raster("./Environmental layers/Global Aridity and PET database/Global PET - Annual/PET_he_annual/pet_he_yr/w001001.adf")
 PET.1km <- mask(crop(PET.1km,neotrop),neotrop)
 PET.10km <- resample(PET.1km,bio.wc2)
 writeRaster(PET.10km, "PET10km")
 ### To avoid this time-consuming step, at the next time you can just call this file:
-### PET.10km <-raster("./PET10km.grd")
+### PET.10km <-raster("./Environmental layers/PET10km.grd")
 res(PET.10km)
 plot(PET.10km)
 
 
 #Aridity Index:
-Aridity.1km <- raster("./Global Aridity and PET database/Global Aridity - Annual/AI_annual/ai_yr/w001001.adf")
+Aridity.1km <- raster("./Environmental layers/Global Aridity and PET database/Global Aridity - Annual/AI_annual/ai_yr/w001001.adf")
 Aridity.1km <- mask(crop(Aridity.1km,neotrop),neotrop)
 Aridity.10km <- resample(Aridity.1km,bio.wc2)
 writeRaster(Aridity.10km, "Aridity10km")
 ### To avoid this time-consuming step, at the next time you can just call this file:
-### Aridity.10km <-raster("./Aridity10km")
+### Aridity.10km <-raster("./Environmental layers/Aridity10km")
 res(Aridity.10km)
 plot(Aridity.10km)
 
 
 #Actual Evapotranspiration:
-AET.1km <- raster("./Global Soil Water Balance and AET/Mean Annual AET/AET_YR/aet_yr/w001001.adf")
+AET.1km <- raster("./Environmental layers/Global Soil Water Balance and AET/Mean Annual AET/AET_YR/aet_yr/w001001.adf")
 AET.1km <- mask(crop(AET.1km,neotrop),neotrop)
 AET.10km <- resample(AET.1km,bio.wc2)
 writeRaster(AET.10km, "AET10km")
 ### To avoid this time-consuming step, at the next time you can just call this file:
-### AET.10km <-raster("./AET10km")
+### AET.10km <-raster("./Environmental layers/AET10km")
 res(AET.10km)
 plot(AET.10km)
 
 
 #Soil Water Stress:
-SWS.jan <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_1/w001001.adf")
-SWS.feb <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_2/w001001.adf")
-SWS.mar <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_3/w001001.adf")
-SWS.apr <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_4/w001001.adf")
-SWS.may <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_5/w001001.adf")
-SWS.jun <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_6/w001001.adf")
-SWS.jul <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_7/w001001.adf")
-SWS.aug <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_8/w001001.adf")
-SWS.sep <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_9/w001001.adf")
-SWS.oct <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_10/w001001.adf")
-SWS.nov <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_11/w001001.adf")
-SWS.dec <-raster("./Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_12/w001001.adf")
+SWS.jan <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_1/w001001.adf")
+SWS.feb <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_2/w001001.adf")
+SWS.mar <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_3/w001001.adf")
+SWS.apr <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_4/w001001.adf")
+SWS.may <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_5/w001001.adf")
+SWS.jun <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_6/w001001.adf")
+SWS.jul <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_7/w001001.adf")
+SWS.aug <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_8/w001001.adf")
+SWS.sep <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_9/w001001.adf")
+SWS.oct <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_10/w001001.adf")
+SWS.nov <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_11/w001001.adf")
+SWS.dec <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_12/w001001.adf")
 SWS.stack <-stack(SWS.jan,SWS.feb,SWS.mar,SWS.apr,SWS.may,SWS.jun,SWS.jul,
 				SWS.aug,SWS.sep,SWS.oct,SWS.nov,SWS.dec)
 
@@ -212,7 +209,7 @@ SWS.mean.1km <-mask(crop(SWS.mean.1km,neotrop),neotrop)
 SWS.mean.10km <-resample(SWS.mean.1km, bio.wc2)
 writeRaster(SWS.mean.10km,"SWSmean10km")
 ### To avoid this time-consuming step, at the next time you can just call this file:
-### SWS.mean.10km <-raster("./SWSmean10km")
+### SWS.mean.10km <-raster("./Environmental layers/SWSmean10km")
 res(SWS.mean.10km)
 plot(SWS.mean.10km)
 
@@ -221,7 +218,7 @@ SWS.min.1km <-mask(crop(SWS.min.1km,neotrop),neotrop)
 SWS.min.10km <-resample(SWS.min.1km, bio.wc2)
 writeRaster(SWS.min.10km,"SWSmin10km")
 ### To avoid this time-consuming step, at the next time you can just call this file:
-### SWS.min.10km <-raster("./SWSmin10km")
+### SWS.min.10km <-raster("./Environmental layers/SWSmin10km")
 res(SWS.min.10km)
 plot(SWS.min.10km)
 
@@ -230,80 +227,80 @@ SWS.max.1km <-mask(crop(SWS.max.1km,neotrop),neotrop)
 SWS.max.10km <-resample(SWS.max.1km, bio.wc2)
 writeRaster(SWS.max.10km,"SWSmax10km")
 ### To avoid this time-consuming step, at the next time you can just call this file:
-### SWS.max.10km <-raster("./SWSmax10km")
+### SWS.max.10km <-raster("./Environmental layers/SWSmax10km")
 res(SWS.max.10km)
 plot(SWS.max.10km)
 
 
-#Relative Umidity at 3pm:
-Umidity.3pm.jan <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm01/w001001.adf")
-Umidity.3pm.feb <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm02/w001001.adf")
-Umidity.3pm.mar <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm03/w001001.adf")
-Umidity.3pm.apr <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm04/w001001.adf")
-Umidity.3pm.may <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm05/w001001.adf")
-Umidity.3pm.jun <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm06/w001001.adf")
-Umidity.3pm.jul <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm07/w001001.adf")
-Umidity.3pm.aug <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm08/w001001.adf")
-Umidity.3pm.sep <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm09/w001001.adf")
-Umidity.3pm.oct <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm10/w001001.adf")
-Umidity.3pm.nov <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm11/w001001.adf")
-Umidity.3pm.dec <-raster("./Relative Umidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm12/w001001.adf")
-Umidity.3pm.stack <-stack(Umidity.3pm.jan, Umidity.3pm.feb, Umidity.3pm.mar, Umidity.3pm.apr, Umidity.3pm.may, Umidity.3pm.jun, Umidity.3pm.jul, 
-				Umidity.3pm.aug, Umidity.3pm.sep, Umidity.3pm.oct, Umidity.3pm.nov, Umidity.3pm.dec)
+#Relative Humidity at 3pm:
+Humidity.3pm.jan <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm01/w001001.adf")
+Humidity.3pm.feb <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm02/w001001.adf")
+Hmidity.3pm.mar <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm03/w001001.adf")
+Humidity.3pm.apr <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm04/w001001.adf")
+Humidity.3pm.may <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm05/w001001.adf")
+Humidity.3pm.jun <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm06/w001001.adf")
+Humidity.3pm.jul <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm07/w001001.adf")
+Humidity.3pm.aug <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm08/w001001.adf")
+Humidity.3pm.sep <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm09/w001001.adf")
+Humidity.3pm.oct <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm10/w001001.adf")
+Humidity.3pm.nov <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm11/w001001.adf")
+Humidity.3pm.dec <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm12/w001001.adf")
+Humidity.3pm.stack <-stack(Humidity.3pm.jan, Humidity.3pm.feb, Humidity.3pm.mar, Humidity.3pm.apr, Humidity.3pm.may, Humidity.3pm.jun, Humidity.3pm.jul, 
+				Humidity.3pm.aug, Humidity.3pm.sep, Humidity.3pm.oct, Humidity.3pm.nov, Humidity.3pm.dec)
 
-Umidity.3pm.mean.20km <-mean(Umidity.3pm.stack)
-Umidity.3pm.mean.20km <-mask(crop(Umidity.3pm.mean.20km,neotrop),neotrop)
-Umidity.3pm.mean.10km <-resample(Umidity.3pm.mean.20km, bio.wc2)
-res(Umidity.3pm.mean.10km)
-plot(Umidity.3pm.mean.10km)
+Humidity.3pm.mean.20km <-mean(Humidity.3pm.stack)
+Humidity.3pm.mean.20km <-mask(crop(Humidity.3pm.mean.20km,neotrop),neotrop)
+Humidity.3pm.mean.10km <-resample(Humidity.3pm.mean.20km, bio.wc2)
+res(Humidity.3pm.mean.10km)
+plot(Humidity.3pm.mean.10km)
 
-Umidity.3pm.max.20km <-max(Umidity.3pm.stack)
-Umidity.3pm.max.20km <-mask(crop(Umidity.3pm.max.20km,neotrop),neotrop)
-Umidity.3pm.max.10km <-resample(Umidity.3pm.max.20km, bio.wc2)
-res(Umidity.3pm.max.10km)
-plot(Umidity.3pm.max.10km)
+Humidity.3pm.max.20km <-max(Humidity.3pm.stack)
+Humidity.3pm.max.20km <-mask(crop(Humidity.3pm.max.20km,neotrop),neotrop)
+Humidity.3pm.max.10km <-resample(Humidity.3pm.max.20km, bio.wc2)
+res(Humidity.3pm.max.10km)
+plot(Humidity.3pm.max.10km)
 
-Umidity.3pm.min.20km <-min(Umidity.3pm.stack)
-Umidity.3pm.min.20km <-mask(crop(Umidity.3pm.min.20km,neotrop),neotrop)
-Umidity.3pm.min.10km <-resample(Umidity.3pm.min.20km, bio.wc2)
-res(Umidity.3pm.min.10km)
-plot(Umidity.3pm.min.10km)
+Humidity.3pm.min.20km <-min(Humidity.3pm.stack)
+Humidity.3pm.min.20km <-mask(crop(Humidity.3pm.min.20km,neotrop),neotrop)
+Humidity.3pm.min.10km <-resample(Humidity.3pm.min.20km, bio.wc2)
+res(Humidity.3pm.min.10km)
+plot(Humidity.3pm.min.10km)
 
 
 #Relative Umidity at 9am:
-Umidity.9am.jan <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham01/w001001.adf")
-Umidity.9am.feb <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham02/w001001.adf")
-Umidity.9am.mar <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham03/w001001.adf")
-Umidity.9am.apr <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham04/w001001.adf")
-Umidity.9am.may <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham05/w001001.adf")
-Umidity.9am.jun <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham06/w001001.adf")
-Umidity.9am.jul <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham07/w001001.adf")
-Umidity.9am.aug <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham08/w001001.adf")
-Umidity.9am.sep <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham09/w001001.adf")
-Umidity.9am.oct <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham10/w001001.adf")
-Umidity.9am.nov <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham11/w001001.adf")
-Umidity.9am.dec <-raster("./Relative Umidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham12/w001001.adf")
+Humidity.9am.jan <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham01/w001001.adf")
+Humidity.9am.feb <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham02/w001001.adf")
+Humidity.9am.mar <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham03/w001001.adf")
+Humidity.9am.apr <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham04/w001001.adf")
+Humidity.9am.may <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham05/w001001.adf")
+Humidity.9am.jun <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham06/w001001.adf")
+Humidity.9am.jul <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham07/w001001.adf")
+Humidity.9am.aug <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham08/w001001.adf")
+Humidity.9am.sep <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham09/w001001.adf")
+Humidity.9am.oct <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham10/w001001.adf")
+Humidity.9am.nov <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham11/w001001.adf")
+Humidity.9am.dec <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham12/w001001.adf")
 
-Umidity.9am.mean.20km <-stack(Umidity.9am.jan, Umidity.9am.feb, Umidity.9am.mar, Umidity.9am.apr, Umidity.9am.may, Umidity.9am.jun, Umidity.9am.jul, 
-				Umidity.9am.aug, Umidity.9am.sep, Umidity.9am.oct, Umidity.9am.nov, Umidity.9am.dec)
-Umidity.9am.mean.20km <-mask(crop(Umidity.9am.mean.20km,neotrop),neotrop)
-Umidity.9am.mean.10km <-resample(Umidity.9am.mean.20km, bio.wc2)
-res(Umidity.9am.mean.10km)
-plot(Umidity.9am.mean.10km)
+Humidity.9am.mean.20km <-stack(Humidity.9am.jan, Humidity.9am.feb, Humidity.9am.mar, Humidity.9am.apr, Humidity.9am.may, Humidity.9am.jun, Humidity.9am.jul, 
+				Humidity.9am.aug, Humidity.9am.sep, Humidity.9am.oct, Humidity.9am.nov, Humidity.9am.dec)
+Humidity.9am.mean.20km <-mask(crop(Humidity.9am.mean.20km,neotrop),neotrop)
+Humidity.9am.mean.10km <-resample(Humidity.9am.mean.20km, bio.wc2)
+res(Humidity.9am.mean.10km)
+plot(Humidity.9am.mean.10km)
 
-Umidity.9am.max.20km <-max(Umidity.9am.jan, Umidity.9am.feb, Umidity.9am.mar, Umidity.9am.apr, Umidity.9am.may, Umidity.9am.jun, Umidity.9am.jul, 
-				Umidity.9am.aug, Umidity.9am.sep, Umidity.9am.oct, Umidity.9am.nov, Umidity.9am.dec)
-Umidity.9am.max.20km <-mask(crop(Umidity.9am.max.20km,neotrop),neotrop)
-Umidity.9am.max.10km <-resample(Umidity.9am.max.20km, bio.wc2)
-res(Umidity.9am.max.10km)
-plot(Umidity.9am.max.10km)
+Humidity.9am.max.20km <-max(Humidity.9am.jan, Humidity.9am.feb, Humidity.9am.mar, Humidity.9am.apr, Humidity.9am.may, Humidity.9am.jun, Humidity.9am.jul, 
+				Humidity.9am.aug, Humidity.9am.sep, Humidity.9am.oct, Humidity.9am.nov, Humidity.9am.dec)
+Humidity.9am.max.20km <-mask(crop(Humidity.9am.max.20km,neotrop),neotrop)
+Humidity.9am.max.10km <-resample(Humidity.9am.max.20km, bio.wc2)
+res(Humidity.9am.max.10km)
+plot(Humidity.9am.max.10km)
 
-Umidity.9am.min.20km <-min(Umidity.9am.jan, Umidity.9am.feb, Umidity.9am.mar, Umidity.9am.apr, Umidity.9am.may, Umidity.9am.jun, Umidity.9am.jul, 
-				Umidity.9am.aug, Umidity.9am.sep, Umidity.9am.oct, Umidity.9am.nov, Umidity.9am.dec)
-Umidity.9am.min.20km <-mask(crop(Umidity.9am.min.20km,neotrop),neotrop)
-Umidity.9am.min.10km <-resample(Umidity.9am.min.20km, bio.wc2)
-res(Umidity.9am.min.10km)
-plot(Umidity.9am.min.10km)
+Humidity.9am.min.20km <-min(Humidity.9am.jan, Humidity.9am.feb, Humidity.9am.mar, Humidity.9am.apr, Humidity.9am.may, Humidity.9am.jun, Humidity.9am.jul, 
+				Humidity.9am.aug, Humidity.9am.sep, Humidity.9am.oct, Humidity.9am.nov, Humidity.9am.dec)
+Humidity.9am.min.20km <-mask(crop(Humidity.9am.min.20km,neotrop),neotrop)
+Humidity.9am.min.10km <-resample(Humidity.9am.min.20km, bio.wc2)
+res(Humidity.9am.min.10km)
+plot(Humidity.9am.min.10km)
 
 
 #########################################################################
@@ -315,12 +312,12 @@ bio.crop <- stack(bio.wc2,
 	wind.speed.mean, wind.speed.max, wind.speed.min, 
 	PET.10km, Aridity.10km, AET.10km, 
 	SWS.mean.10km, SWS.min.10km, SWS.max.10km,
-	Umidity.3pm.mean.10km, Umidity.3pm.min.10km, Umidity.3pm.max.10km, Umidity.9am.mean.10km, Umidity.9am.max.10km, Umidity.9am.min.10km)
+	Humidity.3pm.mean.10km, Humidity.3pm.min.10km, Humidity.3pm.max.10km, Humidity.9am.mean.10km, Humidity.9am.max.10km, Humidity.9am.min.10km)
 bio.crop
 
 
 #################################################################
-################# Performing PCA ################################
+##################### PCA #######################################
 #################################################################
 
 env.selected1 <- rasterPCA(bio.crop, nComp=7, spca = TRUE)
@@ -353,11 +350,10 @@ occurrence.resp <-  rep(1, length(myRespXY$long))
 
 
 #################################################
-############# BUILDING NICHE MODELS #############
+## BUILDING SPECIES DISTRIBUTION MODELS - SDMs ##
 #################################################
 
-### You are strongly invited to read all "biomod2" manuals, tutorials and vignettes before 
-### using the next commands.
+setwd("C:/Modelos Dennis_2.0")
 
 ### for example, number of species occurrence records = 93
 # Prepare data
@@ -383,7 +379,7 @@ sppBiomodData.PA.10000 <- BIOMOD_FormatingData(
 	PA.sre.quant = 0.025)
 sppBiomodData.PA.10000
 
-# Downloading MAXENT software
+
 # MaxEnt .jar
   jar <- paste0(system.file(package = "dismo"), "/java/maxent.jar")
   if (file.exists(jar) != T) {
@@ -399,7 +395,7 @@ system.file("java", package = "dismo")
 myBiomodOption <- BIOMOD_ModelingOptions(MAXENT.Phillips = list(path_to_maxent.jar="C:/Users/R/win-library/3.3/dismo/java"))
 
 
-# Here, 70% of data will be used to train and 30% will be used to test the model (see DataSplit):
+# In this case, 70% of data will be used to train and 30% will be used to test the model:
 sppModelOut.PA.equal <- BIOMOD_Modeling(sppBiomodData.PA.equal, 
 	models = c("GBM", "CTA", "RF"), 
 	NbRunEval = 10,
@@ -521,7 +517,6 @@ names(summary.eval.10000) <- c("Model", "Method", "SD")
 summary.eval.10000
 write.table(summary.eval.10000,"Models2_Evaluation_SD.csv")
 
-
 ### Which algorithms should be retained for the ensemble model?
 
 
@@ -529,10 +524,6 @@ write.table(summary.eval.10000,"Models2_Evaluation_SD.csv")
 #################################
 ## PRODUCING MODEL PROJECTIONS ##
 #################################
-
-### Here we are suggesting the ROC threshold to be used to project binary maps. 
-### ROC threshold corresponds to "Maximum Sensitivity Plus Specificity" threshold,
-### largely recommended when the focus of niche modelling relies on conservation issues.
 
 spp.projections_1 <- BIOMOD_Projection(
 	modeling.output = sppModelOut.PA.equal,
@@ -552,11 +543,11 @@ spp.projections_2 <- BIOMOD_Projection(
 
 
 # Stack projections
-### You should define the path to the file 'proj_Cur1_Occurrence.grd'
+### You should define where is the file 'proj_Cur1_Occurrence.grd'
 projections_cont1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence.grd") #onde estão os modelos produzidos por GBM, CTA e RF
 names(projections_cont1)
 
-### You should define the step to the file 'proj_Cur1_Occurrence_ROCbin.grd'
+### You should define where is the file 'proj_Cur1_Occurrence_ROCbin.grd'
 projections_bin1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence_ROCbin.grd") #onde estão os modelos produzidos por GBM, CTA e RF
 names(projections_bin1)
 
@@ -565,11 +556,11 @@ names(projections_bin1)
 plot(projections_bin1)
 
 
-### You should define the path to the file 'proj_Cur2_Occurrence.grd'
+### You should define where is the file 'proj_Cur2_Occurrence.grd'
 projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence.grd") #onde estão os modelos produzidos pelos demais algoritmos
 names(projections_cont2)
 
-### You should define the path to the file 'proj_Cur2_Occurrence_ROCbin.grd'
+### You should define where is the file 'proj_Cur2_Occurrence_ROCbin.grd'
 projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence_ROCbin.grd") #onde estão os modelos produzidos pelos demais algoritmos
 names(projections_bin2)
 
@@ -577,8 +568,7 @@ names(projections_cont2)=names(projections_bin2)
 plot(projections_cont2)
 
 
-### Apply the steps below only for the retained algorithms
-
+### Apply the steps below only for retained algorithms
 ### Ensemble mean model for each algorithm:
 projections.RF.all <- subset(projections_bin1, grep("RF", names(projections_bin1)))
 projections.RF.mean <- mean(projections.RF.all)
@@ -667,5 +657,3 @@ str(values(projections.mean.binary))
 summary(values(projections.mean.binary))
 windows(w=6, h=6)
 plot(projections.mean.binary, col = matlab.like(100), main = "Ensemble - Current Climate (Binary)", las = 1)
-
-
