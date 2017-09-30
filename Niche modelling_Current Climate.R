@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ####################################################################################
 ####################################################################################
 #######          NICHE MODELLING WITH BIOMOD2 USING       #######
@@ -5,15 +6,28 @@
 #######                 SUMMARIZED IN PCA AXES            #######
 ####################################################################################
 ####################################################################################
+=======
+#################################################################################################
+#################################################################################################
+####### NICHE MODELLING WITH BIOMOD2 USING  40 ENVIRONMENTAL VARIABLES (10-km RESOLUTION) ####### 
+#################################################################################################
+#################################################################################################
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 
 
 # Contact: Pedro V. Eisenlohr (pedrov.eisenlohr@gmail.com)
 
 
 ###################### Acknowledgments ##########################
+<<<<<<< HEAD
 ### Dr. Guarino Colli's team of Universidade de Brasília.
 ### Dr. Diogo Souza Bezerra Rocha (Instituto de Pesquisas Jardim Botânico/RJ).
 ### Drª Marinez Ferreira de Siqueira (Instituto de Pesquisas Jardim Botânico/RJ).
+=======
+### Dr. Guarino Colli's team of Universidade de BrasÃ­lia.
+### Dr. Diogo Souza Bezerra Rocha (Instituto de Pesquisas Jardim BotÃ¢nico/RJ).
+### DrÂª Marinez Ferreira de Siqueira (Instituto de Pesquisas Jardim BotÃ¢nico/RJ).
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 ### My students of Ecology Lab (http://pedroeisenlohr.webnode.com.br/laboratorio-de-ecologia/).
 
 
@@ -77,7 +91,11 @@ edit(spp)
 ### Loading WorldClim 2.0 layers ###
 ###################################################################
 
+<<<<<<< HEAD
 bioclim <- list.files("./Environmental layers/Temperature and Precipitation", full.names=TRUE)
+=======
+bioclim <- list.files("./Environmental layers/wc5 2.0", full.names=TRUE)
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 bio <-stack(bioclim)
 plot(bio[[1]])
 
@@ -88,8 +106,12 @@ edit(presvals)
 
 ## Crop WorldClim layers
 #  *********************
+<<<<<<< HEAD
 #trans <-readOGR("./Shapefiles/Transição/Transicao.shp")
 neotrop <- readOGR("./Shapefiles/ShapeNeo/neotropic.shp")
+=======
+neotrop <- readOGR("./Shapefiles/ShapeNeo/neotrpic_mex_contorno.shp")
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 bio.wc2 <- mask(crop(bio,neotrop),neotrop)
 bio.wc2
 res(bio.wc2)
@@ -172,10 +194,19 @@ plot(wind.speed.min)
 
 
 #Potential Evapotranspiration:
+<<<<<<< HEAD
 PET.1km <- raster("./Environmental layers/Potential Evapotranspiration/Global PET - Annual/PET_he_annual/pet_he_yr/w001001.adf")
 PET.1km <- mask(crop(PET.1km,neotrop),neotrop)
 PET.10km <- resample(PET.1km,bio.wc2)
 writeRaster(PET.10km, "PET10km")
+=======
+PET.1km <- raster("./Environmental layers/Global Aridity and PET database/Global PET - Annual/PET_he_annual/pet_he_yr/w001001.adf")
+PET.1km <- mask(crop(PET.1km,neotrop),neotrop)
+PET.10km <- resample(PET.1km,bio.wc2)
+writeRaster(PET.10km, "PET10km")
+### To avoid this time-consuming step, at the next time you can just call this file:
+### PET.10km <-raster("./Environmental layers/PET10km.grd")
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 res(PET.10km)
 plot(PET.10km)
 
@@ -185,6 +216,11 @@ Aridity.1km <- raster("./Environmental layers/Global Aridity and PET database/Gl
 Aridity.1km <- mask(crop(Aridity.1km,neotrop),neotrop)
 Aridity.10km <- resample(Aridity.1km,bio.wc2)
 writeRaster(Aridity.10km, "Aridity10km")
+<<<<<<< HEAD
+=======
+### To avoid this time-consuming step, at the next time you can just call this file:
+### Aridity.10km <-raster("./Environmental layers/Aridity10km")
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 res(Aridity.10km)
 plot(Aridity.10km)
 
@@ -194,6 +230,11 @@ AET.1km <- raster("./Environmental layers/Global Soil Water Balance and AET/Mean
 AET.1km <- mask(crop(AET.1km,neotrop),neotrop)
 AET.10km <- resample(AET.1km,bio.wc2)
 writeRaster(AET.10km, "AET10km")
+<<<<<<< HEAD
+=======
+### To avoid this time-consuming step, at the next time you can just call this file:
+### AET.10km <-raster("./Environmental layers/AET10km")
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 res(AET.10km)
 plot(AET.10km)
 
@@ -218,6 +259,11 @@ SWS.mean.1km <-mean(SWS.stack)
 SWS.mean.1km <-mask(crop(SWS.mean.1km,neotrop),neotrop)
 SWS.mean.10km <-resample(SWS.mean.1km, bio.wc2)
 writeRaster(SWS.mean.10km,"SWSmean10km")
+<<<<<<< HEAD
+=======
+### To avoid this time-consuming step, at the next time you can just call this file:
+### SWS.mean.10km <-raster("./Environmental layers/SWSmean10km")
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 res(SWS.mean.10km)
 plot(SWS.mean.10km)
 
@@ -232,9 +278,25 @@ SWS.min.1km <-min(SWS.stack)
 SWS.min.1km <-mask(crop(SWS.min.1km,neotrop),neotrop)
 SWS.min.10km <-resample(SWS.min.1km, bio.wc2)
 writeRaster(SWS.min.10km,"SWSmin10km")
+<<<<<<< HEAD
 res(SWS.min.10km)
 plot(SWS.min.10km)
 
+=======
+### To avoid this time-consuming step, at the next time you can just call this file:
+### SWS.min.10km <-raster("./Environmental layers/SWSmin10km")
+res(SWS.min.10km)
+plot(SWS.min.10km)
+
+SWS.max.1km <-max(SWS.stack)
+SWS.max.1km <-mask(crop(SWS.max.1km,neotrop),neotrop)
+SWS.max.10km <-resample(SWS.max.1km, bio.wc2)
+writeRaster(SWS.max.10km,"SWSmax10km")
+### To avoid this time-consuming step, at the next time you can just call this file:
+### SWS.max.10km <-raster("./Environmental layers/SWSmax10km")
+res(SWS.max.10km)
+plot(SWS.max.10km)
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 
 #Relative Humidity at 3pm:
 Humidity.3pm.jan <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm01/w001001.adf")
@@ -349,6 +411,78 @@ Humidity.9am.mean.10km <-raster("./Environmental layers/Relative Humidity 9am/Hu
 Humidity.9am.max.10km <-raster("./Environmental layers/Relative Humidity 9am/Humidity9amMax10km.grd")
 Humidity.9am.min.10km <-raster("./Environmental layers/Relative Humidity 9am/Humidity9amMin10km.grd")
 
+<<<<<<< HEAD
+=======
+#Relative Humidity at 3pm:
+Humidity.3pm.jan <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm01/w001001.adf")
+Humidity.3pm.feb <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm02/w001001.adf")
+Hmidity.3pm.mar <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm03/w001001.adf")
+Humidity.3pm.apr <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm04/w001001.adf")
+Humidity.3pm.may <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm05/w001001.adf")
+Humidity.3pm.jun <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm06/w001001.adf")
+Humidity.3pm.jul <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm07/w001001.adf")
+Humidity.3pm.aug <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm08/w001001.adf")
+Humidity.3pm.sep <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm09/w001001.adf")
+Humidity.3pm.oct <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm10/w001001.adf")
+Humidity.3pm.nov <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm11/w001001.adf")
+Humidity.3pm.dec <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm12/w001001.adf")
+Humidity.3pm.stack <-stack(Humidity.3pm.jan, Humidity.3pm.feb, Humidity.3pm.mar, Humidity.3pm.apr, Humidity.3pm.may, Humidity.3pm.jun, Humidity.3pm.jul, 
+				Humidity.3pm.aug, Humidity.3pm.sep, Humidity.3pm.oct, Humidity.3pm.nov, Humidity.3pm.dec)
+
+Humidity.3pm.mean.20km <-mean(Humidity.3pm.stack)
+Humidity.3pm.mean.20km <-mask(crop(Humidity.3pm.mean.20km,neotrop),neotrop)
+Humidity.3pm.mean.10km <-resample(Humidity.3pm.mean.20km, bio.wc2)
+res(Humidity.3pm.mean.10km)
+plot(Humidity.3pm.mean.10km)
+
+Humidity.3pm.max.20km <-max(Humidity.3pm.stack)
+Humidity.3pm.max.20km <-mask(crop(Humidity.3pm.max.20km,neotrop),neotrop)
+Humidity.3pm.max.10km <-resample(Humidity.3pm.max.20km, bio.wc2)
+res(Humidity.3pm.max.10km)
+plot(Humidity.3pm.max.10km)
+
+Humidity.3pm.min.20km <-min(Humidity.3pm.stack)
+Humidity.3pm.min.20km <-mask(crop(Humidity.3pm.min.20km,neotrop),neotrop)
+Humidity.3pm.min.10km <-resample(Humidity.3pm.min.20km, bio.wc2)
+res(Humidity.3pm.min.10km)
+plot(Humidity.3pm.min.10km)
+
+
+#Relative Umidity at 9am:
+Humidity.9am.jan <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham01/w001001.adf")
+Humidity.9am.feb <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham02/w001001.adf")
+Humidity.9am.mar <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham03/w001001.adf")
+Humidity.9am.apr <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham04/w001001.adf")
+Humidity.9am.may <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham05/w001001.adf")
+Humidity.9am.jun <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham06/w001001.adf")
+Humidity.9am.jul <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham07/w001001.adf")
+Humidity.9am.aug <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham08/w001001.adf")
+Humidity.9am.sep <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham09/w001001.adf")
+Humidity.9am.oct <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham10/w001001.adf")
+Humidity.9am.nov <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham11/w001001.adf")
+Humidity.9am.dec <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham12/w001001.adf")
+
+Humidity.9am.mean.20km <-stack(Humidity.9am.jan, Humidity.9am.feb, Humidity.9am.mar, Humidity.9am.apr, Humidity.9am.may, Humidity.9am.jun, Humidity.9am.jul, 
+				Humidity.9am.aug, Humidity.9am.sep, Humidity.9am.oct, Humidity.9am.nov, Humidity.9am.dec)
+Humidity.9am.mean.20km <-mask(crop(Humidity.9am.mean.20km,neotrop),neotrop)
+Humidity.9am.mean.10km <-resample(Humidity.9am.mean.20km, bio.wc2)
+res(Humidity.9am.mean.10km)
+plot(Humidity.9am.mean.10km)
+
+Humidity.9am.max.20km <-max(Humidity.9am.jan, Humidity.9am.feb, Humidity.9am.mar, Humidity.9am.apr, Humidity.9am.may, Humidity.9am.jun, Humidity.9am.jul, 
+				Humidity.9am.aug, Humidity.9am.sep, Humidity.9am.oct, Humidity.9am.nov, Humidity.9am.dec)
+Humidity.9am.max.20km <-mask(crop(Humidity.9am.max.20km,neotrop),neotrop)
+Humidity.9am.max.10km <-resample(Humidity.9am.max.20km, bio.wc2)
+res(Humidity.9am.max.10km)
+plot(Humidity.9am.max.10km)
+
+Humidity.9am.min.20km <-min(Humidity.9am.jan, Humidity.9am.feb, Humidity.9am.mar, Humidity.9am.apr, Humidity.9am.may, Humidity.9am.jun, Humidity.9am.jul, 
+				Humidity.9am.aug, Humidity.9am.sep, Humidity.9am.oct, Humidity.9am.nov, Humidity.9am.dec)
+Humidity.9am.min.20km <-mask(crop(Humidity.9am.min.20km,neotrop),neotrop)
+Humidity.9am.min.10km <-resample(Humidity.9am.min.20km, bio.wc2)
+res(Humidity.9am.min.10km)
+plot(Humidity.9am.min.10km)
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 
 
 #########################################################################
@@ -400,7 +534,11 @@ occurrence.resp <-  rep(1, length(myRespXY$long))
 
 
 #################################################
+<<<<<<< HEAD
 ## BUILDING THE MODELS ##
+=======
+## BUILDING SPECIES DISTRIBUTION MODELS - SDMs ##
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 #################################################
 
 setwd("C:/Models")
@@ -567,8 +705,11 @@ names(summary.eval.10000) <- c("Model", "Method", "SD")
 summary.eval.10000
 write.table(summary.eval.10000,"Models2_Evaluation_SD.csv")
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 ### Which algorithms should be retained for the ensemble model?
 
 
@@ -596,11 +737,19 @@ spp.projections_2 <- BIOMOD_Projection(
 
 # Stack projections
 ### You should define where is the file 'proj_Cur1_Occurrence.grd'
+<<<<<<< HEAD
 projections_cont1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence.grd") #onde estão os modelos produzidos por GBM, CTA e RF
 names(projections_cont1)
 
 ### You should define where is the file 'proj_Cur1_Occurrence_ROCbin.grd'
 projections_bin1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence_ROCbin.grd") #onde estão os modelos produzidos por GBM, CTA e RF
+=======
+projections_cont1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence.grd") #onde estÃ£o os modelos produzidos por GBM, CTA e RF
+names(projections_cont1)
+
+### You should define where is the file 'proj_Cur1_Occurrence_ROCbin.grd'
+projections_bin1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence_ROCbin.grd") #onde estÃ£o os modelos produzidos por GBM, CTA e RF
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 names(projections_bin1)
 
 names(projections_bin1)=names(projections_cont1)
@@ -608,12 +757,21 @@ names(projections_bin1)
 plot(projections_bin1)
 
 
+<<<<<<< HEAD
 ### You should define the path to the file 'proj_Cur2_Occurrence.grd'
 projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence.grd") #onde estão os modelos produzidos pelos demais algoritmos
 names(projections_cont2)
 
 ### You should define the path to the file 'proj_Cur2_Occurrence_ROCbin.grd'
 projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence_ROCbin.grd") #onde estão os modelos produzidos pelos demais algoritmos
+=======
+### You should define where is the file 'proj_Cur2_Occurrence.grd'
+projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence.grd") #onde estÃ£o os modelos produzidos pelos demais algoritmos
+names(projections_cont2)
+
+### You should define where is the file 'proj_Cur2_Occurrence_ROCbin.grd'
+projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence_ROCbin.grd") #onde estÃ£o os modelos produzidos pelos demais algoritmos
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
 names(projections_bin2)
 
 names(projections_cont2)=names(projections_bin2)
@@ -721,6 +879,9 @@ str(values(projections.mean.binary))
 summary(values(projections.mean.binary))
 windows(w=6, h=6)
 plot(projections.mean.binary, col = matlab.like(100), main = "Ensemble - Current Climate (Binary)", las = 1)
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> 6bd82f11c957320b355cc4c95a00f7d8ad34373c
