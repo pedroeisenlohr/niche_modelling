@@ -615,11 +615,12 @@ projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence.grd") #on
 names(projections_cont2)
 
 ### You should define the path to the file 'proj_Cur2_Occurrence_ROCbin.grd'
-projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence_ROCbin.grd") #onde estão os modelos produzidos pelos demais algoritmos
+projections_bin2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence_ROCbin.grd") #onde estão os modelos produzidos pelos demais algoritmos
 names(projections_bin2)
 
-names(projections_cont2)=names(projections_bin2)
-plot(projections_cont2)
+names(projections_bin2)=names(projections_cont2)
+names(projections_bin2)
+plot(projections_bin2)
 
 
 ### Apply the steps below only for retained algorithms
