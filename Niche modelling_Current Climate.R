@@ -677,6 +677,54 @@ windows(w=6, h=6)
 plot(projections.MAXENT.mean, col = matlab.like(100), main = "MAXENT", las = 1)
 
 
+############################################################
+#### IF YOU PREFER TO OBTAIN ONLY CONTINUOUS PROJECTIONS ###
+############################################################
+
+### Apply the steps below only for retained algorithms
+### Ensemble mean model for each algorithm:
+projections.RF.all <- subset(projections_cont1, grep("RF", names(projections_cont1)))
+projections.RF.mean <- mean(projections.RF.all)
+plot(projections.RF.mean, col = matlab.like(100), main = "RF", las = 1)
+
+projections.GBM.all <-subset(projections_cont1, grep("GBM", names(projections_cont1)))
+projections.GBM.mean <- mean(projections.GBM.all)
+plot(projections.GBM.mean, col = matlab.like(100), main = "GBM", las = 1)
+
+projections.CTA.all <-subset(projections_cont1,grep("CTA", names(projections_cont1)))
+projections.CTA.mean <- mean(projections.CTA.all)
+plot(projections.CTA.mean, col = matlab.like(100), main = "CTA", las = 1)
+
+projections.GLM.all <-subset(projections_cont2,grep("GLM", names(projections_cont2)))
+projections.GLM.mean <- mean(projections.GLM.all)
+plot(projections.GLM.mean, col = matlab.like(100), main = "GLM", las = 1)
+
+projections.GAM.all <-subset(projections_cont2,grep("GAM", names(projections_cont2)))
+projections.GAM.mean <- mean(projections.GAM.all)
+plot(projections.GAM.mean, col = matlab.like(100), main = "GAM", las = 1)
+
+projections.ANN.all <- subset(projections_cont2,grep("ANN", names(projections_cont2)))
+projections.ANN.mean <- mean(projections.ANN.all)
+plot(projections.ANN.mean, col = matlab.like(100), main = "ANN", las = 1)
+
+projections.SRE.all <- subset(projections_cont2,grep("SRE", names(projections_cont2)))
+projections.SRE.mean <- mean(projections.SRE.all)
+plot(projections.SRE.mean, col = matlab.like(100), main = "SRE", las = 1)
+
+projections.MARS.all <- subset(projections_cont2,grep("MARS", names(projections_cont2)))
+projections.MARS.mean <- mean(projections.MARS.all)
+plot(projections.MARS.mean, col = matlab.like(100), main = "MARS", las = 1)
+
+projections.FDA.all <- subset(projections_cont2,grep("FDA", names(projections_cont2)))
+projections.FDA.mean <- mean(projections.FDA.all)
+plot(projections.FDA.mean, col = matlab.like(100), main = "FDA", las = 1)
+
+projections.MAXENT.all <- subset(projections_cont2,grep("MAXENT.Phillips", names(projections_cont2)))
+projections.MAXENT.mean <- mean(projections.MAXENT.all)
+plot(projections.MAXENT.mean, col = matlab.like(100), main = "MAXENT", las = 1)
+
+
+
 ##############################################################
 ################## ENSEMBLE MODEL ############################
 ##############################################################
