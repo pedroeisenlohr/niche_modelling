@@ -744,18 +744,7 @@ plot(spp.spdf, pch = 21, cex = 0.95, col = "gray20", bg = "green", add = T)
 plot(spp.spdf.e, pch = 21, cex = 0.95, col = "gray20", bg = "red", add = T)
 
 
-### Vegetation coverage (http://www.fao.org/soils-portal/soil-survey/soil-maps-and-databases/harmonized-world-soil-database-v12/en/)
-#Forest land
-for.cover<-raster("./Environmental layers/Vegetation coverage/FOR_2000.asc")
-res(veg.cover)
-plot(veg.cover)
-
-# Grass/scrub/woodland (http://www.fao.org/soils-portal/soil-survey/soil-maps-and-databases/harmonized-world-soil-database-v12/en/)
-gr.sc.wo<-raster("./Environmental layers/Vegetation coverage/GRS_2000.asc")
-res(gr.sc.wo)
-plot(gr.sc.wo)
-
-# You can also add shapefiles/rasters of protected areas, biogeographic regions etc.
+# You can also add shapefiles/rasters of protected areas, biogeographic regions, vegetation coverage etc.
 
 
 ## Convert final consensus map to binary
