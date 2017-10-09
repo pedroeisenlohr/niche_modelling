@@ -404,6 +404,8 @@ setwd("C:/Models")
 
 ### for example, number of species occurrence records = 93
 # Prepare data
+### Note that keeping VarImport = 100 implies in a very time-consuming process! Unless obtaining the relative importance of
+### predictors is a priority for you, I suggest you changing '100' to 'FALSE'.
 sppBiomodData.PA.equal <- BIOMOD_FormatingData(
 	resp.var = occurrence.resp,
 	expl.var = env.selected,
@@ -443,6 +445,8 @@ myBiomodOption <- BIOMOD_ModelingOptions(MAXENT.Phillips = list(path_to_maxent.j
 
 
 # In this case, 70% of data will be used to train and 30% will be used to test the model:
+### Note that keeping VarImport = 100 implies in a very time-consuming process! Unless obtaining the relative importance of
+### predictors is a priority for you, I suggest you changing '100' to 'FALSE'.
 sppModelOut.PA.equal <- BIOMOD_Modeling(sppBiomodData.PA.equal, 
 	models = c("GBM", "CTA", "RF"), 
 	NbRunEval = 10,
