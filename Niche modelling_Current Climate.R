@@ -366,8 +366,8 @@ res(bio.crop)
 ##################### PCA #######################################
 #################################################################
 
-env.selected1 <- rasterPCA(bio.crop, nComp=7, spca = TRUE)
-# Here I selected the first 7 components because they account for about 95% 
+env.selected1 <- rasterPCA(bio.crop, nComp=8, spca = TRUE)
+# Here I selected the first 8 components because they account for about 95% 
 # of the total variance considering the 40 predictors of this routine for the 
 # entire Neotropical Region.
 
