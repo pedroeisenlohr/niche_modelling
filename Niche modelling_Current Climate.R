@@ -404,8 +404,7 @@ setwd("C:/Models")
 
 ### for example, number of species occurrence records = 93
 # Prepare data
-### Note that keeping VarImport = 100 implies in a very time-consuming process! Unless obtaining the relative importance of
-### predictors is a priority for you, I suggest you changing '100' to 'FALSE'.
+
 sppBiomodData.PA.equal <- BIOMOD_FormatingData(
 	resp.var = occurrence.resp,
 	expl.var = env.selected,
@@ -465,7 +464,9 @@ sppModelOut.PA.equal
 cl <- makeCluster(detectCores()) # number of cores in computer
 registerDoParallel(cl)
 getDoParWorkers()
-                      
+
+### Note that keeping VarImport = 100 implies in a very time-consuming process! Unless obtaining the relative importance of
+### predictors is a priority for you, I suggest you changing '100' to 'FALSE'.
 sppModelOut.PA.10000 <- BIOMOD_Modeling( 
 	sppBiomodData.PA.10000, 
 	models = c("GLM","GAM","ANN","SRE","FDA","MARS","MAXENT.Phillips"), 
