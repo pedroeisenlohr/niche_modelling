@@ -1,13 +1,13 @@
 ####################################################################################
 ####################################################################################
 #######          NICHE MODELLING WITH BIOMOD2 USING       #######
-#######    40 ENVIRONMENTAL VARIABLES (10-km RESOLUTION)  ####### 
-#######               SUMMARIZED IN PCA AXES              #######
+#######    70 ENVIRONMENTAL VARIABLES (10-km RESOLUTION)  ####### 
+#######                 SUMMARIZED IN PCA AXES            #######
 ####################################################################################
 ####################################################################################
 
 
-# Contact: Pedro V. Eisenlohr (pedrov.eisenlohr@gmail.com)
+# Contact: Pedro V. Eisenlohr (pedro.eisenlohr@unemat.br)
 
 
 ###################### Acknowledgments ##########################
@@ -18,13 +18,25 @@
 
 
 
-
 ###########################################################################################################################################################
-####### Environmental data source 
-## Temperature and precipitation, solar radiation, water vapor pressure and wind speed: WorldClim 2.0 (http://worldclim.org/version2).
-## PET and Aridity Index: Global Aridity and PET Database (http://www.cgiar-csi.org/data/global-aridity-and-pet-database)
-## AET and Soil Water Stress: Global High-Resolution Soil-Water Balance (http://www.cgiar-csi.org/data/global-high-resolution-soil-water-balance#download).
-## Relative Humidity: Climond (https://www.climond.org/RawClimateData.aspx).
+####### Environmental data source (70 variables):
+### Temperature and precipitation (19 variables): CHELSA (http://chelsa-climate.org/).
+### Solar radiation (3 variables), water vapor pressure (3 variables) and wind speed (3 variables): WorldClim 2.0 (http://worldclim.org/version2).
+### Cloud Cover (3 variables): CRU-TS v3.10.01 Historic Climate Database for GIS (http://www.cgiar-csi.org/data/uea-cru-ts-v3-10-01-historic-climate-database).
+### Enhanced Vegetation Index (3 variables): http://www.earthenv.org/.
+### Forest Coverage (1 variable): http://www.fao.org/soils-portal/soil-survey/soil-maps-and-databases/harmonized-world-soil-database-v12/en/.
+### Grassland/Scrub/Woodland Coverage (1 variable): http://www.fao.org/soils-portal/soil-survey/soil-maps-and-databases/harmonized-world-soil-database-v12/en/.
+### Water Bodies Coverage (1 variable): http://www.fao.org/soils-portal/soil-survey/soil-maps-and-databases/harmonized-world-soil-database-v12/en/.
+### Elevation (1 variable): CGIAR-CSI (2006): NASA Shuttle Radar Topographic Mission (SRTM) (http://srtm.csi.cgiar.org/).
+### Slope (1 variable) and Aspect (1 variable): obtained from Elevation.
+### Topographic Wetness Index (1 variable): ENVIREM - ENVIronmental Rasters for Ecological Modeling (http://envirem.github.io/#varTable).
+### Global Relief Model (1 variable): UNEP - http://geodata.grid.unep.ch/results.php
+### Terrain Roughness Index (1 variable): ENVIREM - ENVIronmental Rasters for Ecological Modeling (http://envirem.github.io/#varTable).
+### Potential Evapotranspiration - PET (6 variables) and Aridity Index (1 variable): Global Aridity and PET Database (http://www.cgiar-csi.org/data/global-aridity-and-pet-database) 
+# and ENVIREM - ENVIronmental Rasters for Ecological Modeling (http://envirem.github.io/#varTable).
+### AET (1 variable) and Soil Water Stress (3 variables): Global High-Resolution Soil-Water Balance (http://www.cgiar-csi.org/data/global-high-resolution-soil-water-balance#download).
+### Relative Humidity (6 variables): Climond (https://www.climond.org/RawClimateData.aspx).
+### Soil Variables (10 variables): Soil grids (https://soilgrids.org).
 ###########################################################################################################################################################
 
 
@@ -34,25 +46,29 @@
 ###########################
 
 # Each user should adjust this!
-setwd(choose.dir())
+setwd(choose.dir()) 
 getwd()
+list.files() # Among the listed files, there must be one called 
+             # "Environmental layers" and another called "Shapefiles".
+
 
 ############################################
 ## INSTALL AND LOAD THE REQUIRED PACKAGES ##
 ############################################
 
-install.packages("biomod2", dep=T)
-install.packages("colorRamps", dep=T)
-install.packages("dismo", dep=T)
-install.packages("dplyr", dep=T)
-install.packages("maps", dep=T)
-install.packages("maptools", dep=T)
-install.packages("plotKML", dep=T)
-install.packages("raster", dep=T)
-install.packages("rgdal", dep=T)
-install.packages("RStoolbox", dep=T)
-install.packages("foreach", dep=T)
-install.packages("doParallel", dep=T)
+#install.packages("biomod2", dep=T)
+#install.packages("colorRamps", dep=T)
+#install.packages("dismo", dep=T)
+#install.packages("dplyr", dep=T)
+#install.packages("maps", dep=T)
+#install.packages("maptools", dep=T)
+#install.packages("plotKML", dep=T)
+#install.packages("raster", dep=T)
+#install.packages("rgdal", dep=T)
+#install.packages("RStoolbox", dep=T)
+#install.packages("foreach", dep=T)
+#install.packages("doParallel", dep=T)
+
 
 library(biomod2)
 library(colorRamps)
@@ -68,40 +84,116 @@ library(foreach)
 library(doParallel)
 
 
-### Loading species occurrence data:
-spp<-read.table(file.choose(),row.names=1,header=T,sep=",")
-dim(spp)
-edit(spp)
-
-###################################################################
-### Loading WorldClim 2.0 layers ###
-###################################################################
-
-bioclim <- list.files("./Environmental layers/Temperature and Precipitation", full.names=TRUE)
-bio <-stack(bioclim)
-plot(bio[[1]])
-
-
-## Crop WorldClim layers
-#  *********************
-neotrop <- readOGR("./Shapefiles/ShapeNeo/neotropic.shp")
-bio.wc2 <- mask(crop(bio,neotrop),neotrop)
-bio.wc2
-res(bio.wc2)
-plot(bio.wc2[[1]])
-names(bio.wc2)
 
 
 
 
-##################################################################################
-##################################################################################
 
-######### The steps below are required only at the first time ####################
 
-##################################################################################
-##################################################################################
 
+
+
+
+
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+
+#########################################################################
+#########################################################################
+### IF YOU HAVE ALREADY DOWNLOAD AND TREATED ALL LAYERS, ################
+############### YOU SHOULD SKIP THE STEPS BELOW #########################
+#########################################################################
+
+### Loading CHELSA layers (Temperature and Precipitation - 1979-2013) ###
+#########################################################################
+
+# First, load a 10-km resolution mask to resample:
+#bio.wc <- list.files("./Environmental layers/WorldClim 2.0", full.names=TRUE)
+#bio.wc <- stack(bio.wc)
+#bio.wc
+#res(bio.wc)
+
+# Crop mask layers
+#neotrop <- readOGR("./Shapefiles/ShapeNeo/neotropic.shp")
+#bio.wc <- mask(crop(bio.wc,neotrop),neotrop)
+#bio.wc
+#res(bio.wc)
+
+# Resampling CHELSA layers
+#bioclim <- list.files("./Environmental layers/CHELSA", full.names=TRUE, pattern=".grd")
+#bioclim <- stack(bioclim)
+#bioclim <- mask(crop(bioclim,neotrop),neotrop)
+#names(bioclim)
+#res(bioclim)
+#bioclim <-resample(bioclim, bio.wc)
+#res(bioclim)
+#plot(bioclim[[1]])
+#names(bioclim)
+
+#bio1<-(bioclim[[1]])
+#writeRaster(bio1, "bio01")
+
+#bio10<-(bioclim[[2]])
+#writeRaster(bio10,"bio10")
+
+#bio11<-(bioclim[[3]])
+#writeRaster(bio11,"bio11")
+
+#bio12<-(bioclim[[4]])
+#writeRaster(bio12,"bio12")
+
+#bio13<-(bioclim[[5]])
+#writeRaster(bio13,"bio13")
+
+#bio14<-(bioclim[[6]])
+#writeRaster(bio14,"bio14")
+
+#bio15<-(bioclim[[7]])
+#writeRaster(bio15,"bio15")
+
+#bio16<-(bioclim[[8]])
+#writeRaster(bio16,"bio16")
+
+#bio17<-(bioclim[[9]])
+#writeRaster(bio17,"bio17")
+
+#bio18<-(bioclim[[10]])
+#writeRaster(bio18,"bio18")
+
+#bio19<-(bioclim[[11]])
+#writeRaster(bio19,"bio19")
+
+#bio2<-(bioclim[[12]])
+#writeRaster(bio2,"bio2")
+
+#bio3<-(bioclim[[13]])
+#writeRaster(bio3,"bio3")
+
+#bio4<-(bioclim[[14]])
+#writeRaster(bio4,"bio4")
+
+#bio5<-(bioclim[[15]])
+#writeRaster(bio5,"bio5")
+
+#bio6<-(bioclim[[16]])
+#writeRaster(bio6,"bio6")
+
+#bio7<-(bioclim[[17]])
+#writeRaster(bio7,"bio7")
+
+#bio8<-(bioclim[[18]])
+#writeRaster(bio8,"bio8")
+
+#bio9<-(bioclim[[19]])
+#writeRaster(bio9,"bio9")
 
 
 ####################################################################
@@ -127,7 +219,6 @@ plot(solar.radiation.max)
 res(solar.radiation.min)
 plot(solar.radiation.min)
 
-
 #Water Vapor Pressure:
 water.vapor.pressure <- list.files("./Environmental layers/Water Vapor Pressure", pattern=".tif", full.names=TRUE)
 water.vapor.pressure <-stack(water.vapor.pressure)
@@ -146,7 +237,6 @@ res(water.vapor.pressure.max)
 plot(water.vapor.pressure.max)
 res(water.vapor.pressure.min)
 plot(water.vapor.pressure.min)
-
 
 #Wind Speed:
 wind.speed <- list.files("./Environmental layers/Wind Speed", pattern=".tif", full.names=TRUE)
@@ -167,33 +257,195 @@ plot(wind.speed.max)
 res(wind.speed.min)
 plot(wind.speed.min)
 
+#Cloud Cover:
+cloud.cover<-list.files("./Environmental layers/Cloud Cover",pattern=".asc", full.names=TRUE)
+cloud.cover<-stack(cloud.cover)
+cloud.cover.mean<-mean(cloud.cover)
+cloud.cover.max<-max(cloud.cover)
+cloud.cover.min<-min(cloud.cover)
+cloud.cover.mean<-mask(crop(cloud.cover.mean, neotrop),neotrop)
+cloud.cover.mean<-resample(cloud.cover.mean,bio.wc2)
+writeRaster(cloud.cover.mean,"CloudCoverMean")
+cloud.cover.max<-mask(crop(cloud.cover.max, neotrop),neotrop)
+cloud.cover.max<-resample(cloud.cover.max,bio.wc2)
+writeRaster(cloud.cover.max,"CloudCoverMax")
+cloud.cover.min<-mask(crop(cloud.cover.min, neotrop),neotrop)
+cloud.cover.min<-resample(cloud.cover.min,bio.wc2)
+writeRaster(cloud.cover.min,"CloudCoverMin")
+res(cloud.cover.mean)
+plot(cloud.cover.mean)
+res(cloud.cover.max)
+plot(cloud.cover.max)
+res(cloud.cover.min)
+plot(cloud.cover.min)
 
-#Potential Evapotranspiration:
+#Enhanced Vegetation Index - Coeficient of Variation:
+EVI.cv <- list.files("./Environmental layers/Enhanced Vegetation Index_cv",pattern=".tif", full.names=TRUE)
+EVI.cv <- stack(EVI.cv)
+EVI.cv <- mask(crop(EVI.cv,neotrop),neotrop)
+EVI.cv.10km <- resample(EVI.cv,bioclim)
+writeRaster(EVI.cv.10km, "EVIcv10km")
+res(EVI.cv.10km)
+plot(EVI.cv.10km)
+
+#Enhanced Vegetation Index - Range:
+EVI.rng <- list.files("./Environmental layers/Enhanced Vegetation Index_range",pattern=".tif", full.names=TRUE)
+EVI.rng <- stack(EVI.rng)
+EVI.rng <- mask(crop(EVI.rng,neotrop),neotrop)
+EVI.rng.10km <- resample(EVI.rng,bioclim)
+writeRaster(EVI.rng.10km, "EVIrng10km")
+res(EVI.rng.10km)
+plot(EVI.rng.10km)
+
+#Enhanced Vegetation Index - Standard Deviation:
+EVI.std <- list.files("./Environmental layers/Enhanced Vegetation Index_std",pattern=".tif", full.names=TRUE)
+EVI.std <- stack(EVI.std)
+EVI.std <- mask(crop(EVI.std,neotrop),neotrop)
+EVI.std.10km <- resample(EVI.std,bioclim)
+writeRaster(EVI.std.10km, "EVIstd10km")
+res(EVI.std.10km)
+plot(EVI.std.10km)
+
+#Forest Coverage:
+FOR.cov <- list.files("./Environmental layers/Vegetation coverage/Forest Coverage",pattern=".asc", full.names=TRUE)
+FOR.cov <- stack(FOR.cov)
+FOR.cov <- mask(crop(FOR.cov,neotrop),neotrop)
+writeRaster(FOR.cov, "FORcov")
+res(FOR.cov)
+plot(FOR.cov)
+
+#Grassland/Scrub/Woodland Coverage:
+GRASS.cov <- list.files("./Environmental layers/Vegetation coverage/Grassland Coverage",pattern=".asc", full.names=TRUE)
+GRASS.cov <- stack(GRASS.cov)
+GRASS.cov <- mask(crop(GRASS.cov,neotrop),neotrop)
+writeRaster(GRASS.cov, "GRASScov")
+res(GRASS.cov)
+plot(GRASS.cov)
+
+#Water Bodies:
+WATB.cov <- list.files("./Environmental layers/Vegetation coverage/Water Bodies",pattern=".asc", full.names=TRUE)
+WATB.cov <- stack(WATB.cov)
+WATB.cov <- mask(crop(WATB.cov,neotrop),neotrop)
+writeRaster(WATB.cov, "WATBcov")
+res(WATB.cov)
+plot(WATB.cov)
+
+#Elevation:
+elevation <-list.files("./Environmental layers/Elevation",pattern=".asc", full.names=TRUE)
+elevation <-stack(elevation)
+elevation <-mask(crop(elevation, neotrop),neotrop)
+elevation.10km <-resample(elevation,bioclim)
+writeRaster(elevation.10km,"Elevation10km")
+res(elevation.10km)
+plot(elevation.10km)
+
+# Global Relief Model:
+relief <- list.files("./Environmental layers/Global Relief Model", pattern="tif", full.names=TRUE)
+relief <- stack(relief)
+relief <- mask(crop(relief,neotrop),neotrop)
+relief.10km <- resample(relief, bioclim)
+writeRaster(relief.10km, "relief10km")
+res(relief.10km)
+plot(relief.10km)
+
+#Slope and Aspect:
+slope <- terrain(elevation.10km, opt="slope")
+writeRaster(slope,"Slope")
+res(slope)
+plot(slope)
+
+aspect <- terrain(elevation.10km, opt="aspect")
+writeRaster(aspect,"Aspect")
+res(aspect)
+plot(aspect)
+
+#Terrain Roughness Index:
+roughness <-list.files("./Environmental layers/Terrain Roughness Index",pattern=".tif", full.names=TRUE)
+roughness <- stack(roughness)
+roughness <-mask(crop(roughness, neotrop),neotrop)
+roughness.10km <-resample(roughness,bioclim)
+writeRaster(roughness.10km,"Roughness10km")
+res(roughness.10km)
+plot(roughness.10km)
+
+#Topographic Wetness Index:
+topowet <-list.files("./Environmental layers/Topographic Wetness Index",pattern=".tif", full.names=TRUE)
+topowet <- stack(topowet)
+topowet <-mask(crop(topowet, neotrop),neotrop)
+topowet.10km <-resample(topowet,bioclim)
+writeRaster(topowet.10km,"TopoWet10km")
+res(topowet.10km)
+plot(topowet.10km)
+
+#Potential Evapotranspiration - PET:
+### Annual PET:
 PET.1km <- raster("./Environmental layers/Potential Evapotranspiration/Global PET - Annual/PET_he_annual/pet_he_yr/w001001.adf")
 PET.1km <- mask(crop(PET.1km,neotrop),neotrop)
-PET.10km <- resample(PET.1km,bio.wc2)
+PET.10km <- resample(PET.1km,bioclim)
 writeRaster(PET.10km, "PET10km")
 res(PET.10km)
 plot(PET.10km)
 
+### PET Coldest Quarter:
+PET.cq <- list.files("./Environmental layers/Potential Evapotranspiration/PET Coldest Quarter",pattern=".tif", full.names=TRUE)
+PET.cq <- stack(PET.cq)
+PET.cq <-mask(crop(PET.cq, neotrop),neotrop)
+PET.cq <-resample(PET.cq,bioclim)
+writeRaster(PET.cq,"PETcq")
+res(PET.cq)
+plot(PET.cq)
+
+### PET Driest Quarter:
+PET.dq <- list.files("./Environmental layers/Potential Evapotranspiration/PET Driest Quarter",pattern=".tif", full.names=TRUE)
+PET.dq <- stack(PET.dq)
+PET.dq <-mask(crop(PET.dq, neotrop),neotrop)
+PET.dq <-resample(PET.dq,bioclim)
+writeRaster(PET.dq,"PETdq")
+res(PET.dq)
+plot(PET.dq)
+
+### PET Warmest Quarter:
+PET.wq <- list.files("./Environmental layers/Potential Evapotranspiration/PET Warmest Quarter",pattern=".tif", full.names=TRUE)
+PET.wq <- stack(PET.wq)
+PET.wq <- mask(crop(PET.wq, neotrop),neotrop)
+PET.wq <- resample(PET.wq,bioclim)
+writeRaster(PET.wq,"PETwq")
+res(PET.wq)
+plot(PET.wq)
+
+### PET Wettest Quarter:
+PET.wetq <- list.files("./Environmental layers/Potential Evapotranspiration/PET Wettest Quarter",pattern=".tif", full.names=TRUE)
+PET.wetq <- stack(PET.wetq)
+PET.wetq <- mask(crop(PET.wetq, neotrop),neotrop)
+PET.wetq <- resample(PET.wetq,bioclim)
+writeRaster(PET.wetq,"PETwetq")
+res(PET.wetq)
+plot(PET.wetq)
+
+### PET Seasonality:
+PET.seas <- list.files("./Environmental layers/Potential Evapotranspiration/PET Seasonality",pattern=".tif", full.names=TRUE)
+PET.seas <- stack(PET.seas)
+PET.seas <- mask(crop(PET.seas, neotrop),neotrop)
+PET.seas <- resample(PET.seas,bioclim)
+writeRaster(PET.seas,"PETseas")
+res(PET.seas)
+plot(PET.seas)
 
 #Aridity Index:
 Aridity.1km <- raster("./Environmental layers/Global Aridity and PET database/Global Aridity - Annual/AI_annual/ai_yr/w001001.adf")
 Aridity.1km <- mask(crop(Aridity.1km,neotrop),neotrop)
-Aridity.10km <- resample(Aridity.1km,bio.wc2)
+Aridity.10km <- resample(Aridity.1km,bioclim)
 writeRaster(Aridity.10km, "Aridity10km")
 res(Aridity.10km)
 plot(Aridity.10km)
 
-
 #Actual Evapotranspiration:
 AET.1km <- raster("./Environmental layers/Global Soil Water Balance and AET/Mean Annual AET/AET_YR/aet_yr/w001001.adf")
 AET.1km <- mask(crop(AET.1km,neotrop),neotrop)
-AET.10km <- resample(AET.1km,bio.wc2)
+AET.10km <- resample(AET.1km,bioclim)
 writeRaster(AET.10km, "AET10km")
 res(AET.10km)
 plot(AET.10km)
-
 
 #Soil Water Stress:
 SWS.jan <-raster("./Environmental layers/Global Soil Water Balance and AET/Monthly Soil Water Stress/swc_fr/swc_fr_1/w001001.adf")
@@ -213,25 +465,24 @@ SWS.stack <-stack(SWS.jan,SWS.feb,SWS.mar,SWS.apr,SWS.may,SWS.jun,SWS.jul,
 
 SWS.mean.1km <-mean(SWS.stack)
 SWS.mean.1km <-mask(crop(SWS.mean.1km,neotrop),neotrop)
-SWS.mean.10km <-resample(SWS.mean.1km, bio.wc2)
+SWS.mean.10km <-resample(SWS.mean.1km, bioclim)
 writeRaster(SWS.mean.10km,"SWSmean10km")
 res(SWS.mean.10km)
 plot(SWS.mean.10km)
 
 SWS.max.1km <-max(SWS.stack)
 SWS.max.1km <-mask(crop(SWS.max.1km,neotrop),neotrop)
-SWS.max.10km <-resample(SWS.max.1km, bio.wc2)
+SWS.max.10km <-resample(SWS.max.1km, bioclim)
 writeRaster(SWS.max.10km,"SWSmax10km")
 res(SWS.max.10km)
 plot(SWS.max.10km)
 
 SWS.min.1km <-min(SWS.stack)
 SWS.min.1km <-mask(crop(SWS.min.1km,neotrop),neotrop)
-SWS.min.10km <-resample(SWS.min.1km, bio.wc2)
+SWS.min.10km <-resample(SWS.min.1km, bioclim)
 writeRaster(SWS.min.10km,"SWSmin10km")
 res(SWS.min.10km)
 plot(SWS.min.10km)
-
 
 #Relative Humidity at 3pm:
 Humidity.3pm.jan <-raster("./Environmental layers/Relative Humidity at 3 pm/CM10_1975H_Raw_ESRI_RHpm_V1.2/CM10_1975H_Raw_ESRI_RHpm_V1.2/rhpm01/w001001.adf")
@@ -251,25 +502,24 @@ Humidity.3pm.stack <-stack(Humidity.3pm.jan, Humidity.3pm.feb, Humidity.3pm.mar,
 
 Humidity.3pm.mean.20km <-mean(Humidity.3pm.stack)
 Humidity.3pm.mean.20km <-mask(crop(Humidity.3pm.mean.20km,neotrop),neotrop)
-Humidity.3pm.mean.10km <-resample(Humidity.3pm.mean.20km, bio.wc2)
+Humidity.3pm.mean.10km <-resample(Humidity.3pm.mean.20km, bioclim)
 writeRaster(Humidity.3pm.mean.10km,"Humidity3pmMean10km")
 res(Humidity.3pm.mean.10km)
 plot(Humidity.3pm.mean.10km)
 
 Humidity.3pm.max.20km <-max(Humidity.3pm.stack)
 Humidity.3pm.max.20km <-mask(crop(Humidity.3pm.max.20km,neotrop),neotrop)
-Humidity.3pm.max.10km <-resample(Humidity.3pm.max.20km, bio.wc2)
+Humidity.3pm.max.10km <-resample(Humidity.3pm.max.20km, bioclim)
 writeRaster(Humidity.3pm.max.10km,"Humidity3pmMax10km")
 res(Humidity.3pm.max.10km)
 plot(Humidity.3pm.max.10km)
 
 Humidity.3pm.min.20km <-min(Humidity.3pm.stack)
 Humidity.3pm.min.20km <-mask(crop(Humidity.3pm.min.20km,neotrop),neotrop)
-Humidity.3pm.min.10km <-resample(Humidity.3pm.min.20km, bio.wc2)
+Humidity.3pm.min.10km <-resample(Humidity.3pm.min.20km, bioclim)
 writeRaster(Humidity.3pm.min.10km,"Humidity3pmMin10km")
 res(Humidity.3pm.min.10km)
 plot(Humidity.3pm.min.10km)
-
 
 #Relative Humidity at 9am:
 Humidity.9am.jan <-raster("./Environmental layers/Relative Humidity at 9 am/CM10_1975H_Raw_ESRI_RHam_V1.2/CM10_1975H_Raw_ESRI_RHam_V1.2/rham01/w001001.adf")
@@ -289,103 +539,386 @@ Humidity.9am.stack <-stack(Humidity.9am.jan, Humidity.9am.feb, Humidity.9am.mar,
 
 Humidity.9am.mean.20km <-mean(Humidity.9am.stack)
 Humidity.9am.mean.20km <-mask(crop(Humidity.9am.mean.20km,neotrop),neotrop)
-Humidity.9am.mean.10km <-resample(Humidity.9am.mean.20km, bio.wc2)
+Humidity.9am.mean.10km <-resample(Humidity.9am.mean.20km, bioclim)
 writeRaster(Humidity.9am.mean.10km,"Humidity9amMean10km")
 res(Humidity.9am.mean.10km)
 plot(Humidity.9am.mean.10km)
 
 Humidity.9am.max.20km <-max(Humidity.9am.stack)
 Humidity.9am.max.20km <-mask(crop(Humidity.9am.max.20km,neotrop),neotrop)
-Humidity.9am.max.10km <-resample(Humidity.9am.max.20km, bio.wc2)
+Humidity.9am.max.10km <-resample(Humidity.9am.max.20km, bioclim)
 writeRaster(Humidity.9am.max.10km,"Humidity9amMax10km")
 res(Humidity.9am.max.10km)
 plot(Humidity.9am.max.10km)
 
 Humidity.9am.min.20km <-min(Humidity.9am.stack)
 Humidity.9am.min.20km <-mask(crop(Humidity.9am.min.20km,neotrop),neotrop)
-Humidity.9am.min.10km <-resample(Humidity.9am.min.20km, bio.wc2)
+Humidity.9am.min.10km <-resample(Humidity.9am.min.20km, bioclim)
 writeRaster(Humidity.9am.min.10km,"Humidity9amMin10km")
 res(Humidity.9am.min.10km)
 plot(Humidity.9am.min.10km)
 
+### Soil Grids:
+# Bulk Density
+BulkDensity.0 <- raster("./Environmental layers/Soil Grids/Bulk Density/BLDFIE_M_sl1_250m.tif")
+BulkDensity.5 <- raster("./Environmental layers/Soil Grids/Bulk Density/BLDFIE_M_sl2_250m.tif")
+BulkDensity.15 <- raster("./Environmental layers/Soil Grids/Bulk Density/BLDFIE_M_sl3_250m.tif")
+BulkDensity.30 <- raster("./Environmental layers/Soil Grids/Bulk Density/BLDFIE_M_sl4_250m.tif")
+BulkDensity <- stack(BulkDensity.0, BulkDensity.5, BulkDensity.15, BulkDensity.30)
+BulkDensity <- mean(BulkDensity)
+BulkDensity <- mask(crop(BulkDensity,neotrop),neotrop)
+BulkDensity <- resample(BulkDensity,bioclim)
+writeRaster(BulkDensity, "BulkDensity.grd")
+res(BulkDensity)
 
-##################################################################################
-##################################################################################
+# Clay Content
+Clay.0 <- raster("./Environmental layers/Soil Grids/Clay Content/CLYPPT_M_sl1_250m.tif")
+Clay.5 <- raster("./Environmental layers/Soil Grids/Clay Content/CLYPPT_M_sl2_250m.tif")
+Clay.15 <- raster("./Environmental layers/Soil Grids/Clay Content/CLYPPT_M_sl3_250m.tif")
+Clay.30 <- raster("./Environmental layers/Soil Grids/Clay Content/CLYPPT_M_sl4_250m.tif")
+Clay <- stack(Clay.0,Clay.5,Clay.15,Clay.30)
+Clay <- mean(Clay)
+Clay <- mask(crop(Clay,neotrop),neotrop)
+Clay <- resample(Clay, bioclim)
+writeRaster(Clay, "Clay.grd")
+res(Clay)
 
-######### The steps above are required only at the first time ####################
+# Coarse Fragments
+Coarse.0 <- raster("./Environmental layers/Soil Grids/Coarse Fragments/CRFVOL_M_sl1_250m.tif")
+Coarse.5 <- raster("./Environmental layers/Soil Grids/Coarse Fragments/CRFVOL_M_sl2_250m.tif")
+Coarse.15 <- raster("./Environmental layers/Soil Grids/Coarse Fragments/CRFVOL_M_sl3_250m.tif")
+Coarse.30 <- raster("./Environmental layers/Soil Grids/Coarse Fragments/CRFVOL_M_sl4_250m.tif")
+Coarse <- stack(Coarse.0,Coarse.5,Coarse.15,Coarse.30)
+Coarse <- mean(Coarse)
+Coarse <- mask(crop(Coarse,neotrop),neotrop)
+Coarse <- resample(Coarse, bioclim)
+writeRaster(Coarse, "Coarse.grd")
+res(Coarse)
 
-##################################################################################
-##################################################################################
+# Sand Content
+Sand.0 <- raster("./Environmental layers/Soil Grids/Sand Content/SNDPPT_M_sl1_250m.tif")
+Sand.5 <- raster("./Environmental layers/Soil Grids/Sand Content/SNDPPT_M_sl2_250m.tif")
+Sand.15 <- raster("./Environmental layers/Soil Grids/Sand Content/SNDPPT_M_sl3_250m.tif")
+Sand.30 <- raster("./Environmental layers/Soil Grids/Sand Content/SNDPPT_M_sl4_250m.tif")
+Sand <- stack(Sand.0,Sand.5,Sand.15,Sand.30)
+Sand <- mean(Sand)
+Sand <- mask(crop(Sand,neotrop),neotrop)
+Sand <- resample(Sand, bioclim)
+writeRaster(Sand, "Sand.grd")
+res(Sand)
+
+# Silt Content
+Silt.0 <- raster("./Environmental layers/Soil Grids/Silt Content/SLTPPT_M_sl1_250m.tif")
+Silt.5 <- raster("./Environmental layers/Soil Grids/Silt Content/SLTPPT_M_sl2_250m.tif")
+Silt.15 <- raster("./Environmental layers/Soil Grids/Silt Content/SLTPPT_M_sl3_250m.tif")
+Silt.30 <- raster("./Environmental layers/Soil Grids/Silt Content/SLTPPT_M_sl4_250m.tif")
+Silt <- stack(Silt.0,Silt.5,Silt.15,Silt.30)
+Silt <- mean(Silt)
+Silt <- mask(crop(Silt,neotrop),neotrop)
+Silt <- resample(Silt, bioclim)
+writeRaster(Silt, "Silt.grd")
+res(Silt)
+
+# Predicted Probability of Occurrence of R horizon
+BDRLOG <- raster("./Environmental layers/Soil Grids/BDRLOG/BDRLOG_M_250m.tif")
+BDRLOG <- stack(BDRLOG)
+BDRLOG <- mask(crop(BDRLOG,neotrop),neotrop)
+BDRLOG <- resample(BDRLOG, bioclim)
+writeRaster(BDRLOG, "BDRLOG.grd")
+res(BDRLOG)
+
+# Depth to bedrock up to 200m
+BDRICM <- raster("./Environmental layers/Soil Grids/Depth to Bedrock/BDRICM_M_250m.tif")
+BDRICM <- stack(BDRICM)
+BDRICM <- mask(crop(BDRICM,neotrop),neotrop)
+BDRICM <- resample(BDRICM, bioclim)
+writeRaster(BDRICM, "BDRICM.grd")
+res(BDRICM)
+
+# Soil organic carbon stock
+CARBON.0 <- raster("./Environmental layers/Soil Grids/Carbon stock/OCSTHA_M_sd1_250m.tif")
+CARBON.5 <- raster("./Environmental layers/Soil Grids/Carbon stock/OCSTHA_M_sd2_250m.tif")
+CARBON.15 <- raster("./Environmental layers/Soil Grids/Carbon stock/OCSTHA_M_sd3_250m.tif")
+CARBON.30 <- raster("./Environmental layers/Soil Grids/Carbon stock/OCSTHA_M_sd4_250m.tif")
+CARBON <- stack(CARBON.0, CARBON.5, CARBON.15, CARBON.30)
+CARBON <- mean (CARBON)
+CARBON <- mask(crop(CARBON,neotrop),neotrop)
+CARBON <- resample(CARBON, bioclim)
+writeRaster(CARBON, "CARBON.grd")
+res(CARBON)
+
+# pH in H20
+pH_w.0 <- raster("./Environmental layers/Soil Grids/PHIHOX/PHIHOX_M_sl1_250m.tif")
+pH_w.5 <- raster("./Environmental layers/Soil Grids/PHIHOX/PHIHOX_M_sl2_250m.tif")
+pH_w.15 <- raster("./Environmental layers/Soil Grids/PHIHOX/PHIHOX_M_sl3_250m.tif")
+pH_w.30 <- raster("./Environmental layers/Soil Grids/PHIHOX/PHIHOX_M_sl4_250m.tif")
+pH_w <- stack(pH_w.0,pH_w.5,pH_w.15,pH_w.30)
+pH_w <- mean (pH_w)
+pH_w <- mask(crop(pH_w,neotrop),neotrop)
+pH_w <- resample(pH_w, bioclim)
+writeRaster(pH_w, "pH_w.grd")
+res(pH_w)
+
+# pH in KCl
+pH_k.0 <- raster("./Environmental layers/Soil Grids/PHIKCL/PHIKCL_M_sl1_250m.tif")
+pH_k.5 <- raster("./Environmental layers/Soil Grids/PHIKCL/PHIKCL_M_sl2_250m.tif")
+pH_k.15 <- raster("./Environmental layers/Soil Grids/PHIKCL/PHIKCL_M_sl3_250m.tif")
+pH_k.30 <- raster("./Environmental layers/Soil Grids/PHIKCL/PHIKCL_M_sl4_250m.tif")
+pH_k <- stack(pH_k.0,pH_k.5,pH_k.15,pH_k.30)
+pH_k <- mean (pH_k)
+pH_k <- mask(crop(pH_k,neotrop),neotrop)
+pH_k <- resample(pH_k, bioclim)
+writeRaster(pH_k, "pH_k.grd", overwrite=TRUE)
+res(pH_k)
+
+#ORCDRC
+ORCDRC.0 <- raster("./Environmental layers/Soil Grids/ORCDRC/ORCDRC_M_sl1_250m.tif")
+ORCDRC.5 <- raster("./Environmental layers/Soil Grids/ORCDRC/ORCDRC_M_sl2_250m.tif")
+ORCDRC.15 <- raster("./Environmental layers/Soil Grids/ORCDRC/ORCDRC_M_sl3_250m.tif")
+ORCDRC.30 <- raster("./Environmental layers/Soil Grids/ORCDRC/ORCDRC_M_sl4_250m.tif")
+ORC <- stack(ORCDRC.0,ORCDRC.5,ORCDRC.15,ORCDRC.30)
+ORC <- mean (ORC)
+ORC <- mask(crop(ORC,neotrop),neotrop)
+ORC <- resample(ORC, bioclim)
+writeRaster(ORC, "ORC.grd")
+res(ORC)
+
+# CEC
+CEC.0 <- raster("./Environmental layers/Soil Grids/CECSOL/CECSOL_M_sl1_250m.tif")
+CEC.5 <- raster("./Environmental layers/Soil Grids/CECSOL/CECSOL_M_sl2_250m.tif")
+CEC.15 <- raster("./Environmental layers/Soil Grids/CECSOL/CECSOL_M_sl3_250m.tif")
+CEC.30 <- raster("./Environmental layers/Soil Grids/CECSOL/CECSOL_M_sl4_250m.tif")
+CEC <- stack(CEC.0,CEC.5,CEC.15,CEC.30)
+CEC <- mean (CEC)
+CEC <- mask(crop(CEC,neotrop),neotrop)
+CEC <- resample(CEC, bioclim)
+writeRaster(CEC, "CEC.grd")
+res(CEC)
+
+#########################################################################
+
+
+
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+******************************************************************
+
+
+
+
+
+
+
+
+
+
+#########################################################################
+### IF YOU HAVE ALREADY DOWNLOAD AND TREATED ALL LAYERS, ################
+############### YOU SHOULD CONTINUE FROM HERE ###########################
+
+###################################################################
+### Loading species occurrence data ###
+###################################################################
+spp<-read.table(file.choose(),row.names=1,header=T,sep=",")
+dim(spp)
+edit(spp)
+
+# Diagnosing possible problems with matrix:
+# generate species sums these will be NA is any are missing 
+csum <- colSums(spp) 
+# check if any are missing 
+any(is.na(csum)) 
+#[1] TRUE 
+# If TRUE, some is missing. So, which ones? 
+#which(is.na(csum)) 
+
+
+# Selecting spatially unique records #
+bioclim <- list.files("./Environmental layers/CHELSA", pattern="grd", full.names=TRUE)
+bioclim <- stack(bioclim)
+mask <- bioclim[[1]]
+cell <- cellFromXY(mask, spp[,1:2]) # get the cell number for each point
+cell
+dup <- duplicated(cbind(spp[,1:2],cell))
+dup
+spp <- spp[!dup, ]# select the records that are not duplicated
+spp
+dim(spp)
+edit(spp)
+
+
+# Visualizing species occurrence records on a map #
+data(wrld_simpl)
+plot(wrld_simpl, xlim=c(-85, -35), ylim=c(-55, 15), col="lightgray", axes=TRUE)
+points(spp$long, spp$lat, col="black", bg="red", pch=21, cex=1.0, lwd=1.0)
 
 
 
 
 ######################################################################
-#################### Automatizing the process above ##################
-######################################################################
-### Only in case if you have already processed the steps above:
+############### Loading environmental layers ###################
+bioclim <- list.files("./Environmental layers/CHELSA", pattern="grd", full.names=TRUE)
+bioclim <- stack(bioclim)
 solar.radiation.mean <-raster("./Environmental layers/Solar Radiation/SolarRadiationMean.grd")
+names(solar.radiation.mean) = "Solar Rad_Mean"
 solar.radiation.max <-raster("./Environmental layers/Solar Radiation/SolarRadiationMax.grd")
+names(solar.radiation.max) = "Solar Rad_Max"
 solar.radiation.min <-raster("./Environmental layers/Solar Radiation/SolarRadiationMin.grd")
+names(solar.radiation.min) = "Solar Rad_Min"
 water.vapor.pressure.mean<-raster("./Environmental layers/Water Vapor Pressure/WaterVaporPressureMean.grd")
+names(water.vapor.pressure.mean) = "Water Vapor Press_Mean"
 water.vapor.pressure.max <-raster("./Environmental layers/Water Vapor Pressure/WaterVaporPressureMax.grd")
+names(water.vapor.pressure.max) = "Water Vapor Press_Max"
 water.vapor.pressure.min <-raster("./Environmental layers/Water Vapor Pressure/WaterVaporPressureMin.grd")
+names(water.vapor.pressure.min) = "Water Vapor Press_Min"
 wind.speed.mean <-raster("./Environmental layers/Wind Speed/WindSpeedMean.grd")
+names(wind.speed.mean) = "Wind Speed_Mean"
 wind.speed.max <-raster("./Environmental layers/Wind Speed/WindSpeedMax.grd")
+names(wind.speed.max) = "Wind Speed_Max"
 wind.speed.min <-raster("./Environmental layers/Wind Speed/WindSpeedMin.grd")
-PET.10km <-raster("./Environmental layers/Potential Evapotranspiration/Global PET - Annual/PET10km.grd")
+names(wind.speed.min) = "Wind Speed_Min"
+cloud.cover.mean <-raster("./Environmental layers/Cloud Cover/CloudCoverMean.grd")
+names(cloud.cover.mean) = "Cloud Cover_Mean"
+cloud.cover.max <- raster("./Environmental layers/Cloud Cover/CloudCoverMax.grd")
+names(cloud.cover.max) = "Cloud Cover_Max"
+cloud.cover.min <- raster("./Environmental layers/Cloud Cover/CloudCoverMin.grd")
+names(cloud.cover.min) = "Cloud Cover_Min"
+EVI.cv.10km <- raster("./Environmental layers/Enhanced Vegetation Index_cv/EVIcv10km.grd")
+names(EVI.cv.10km) = "EVI_cv"
+EVI.rng.10km <- raster("./Environmental layers/Enhanced Vegetation Index_rng/EVIrng10km.grd")
+names(EVI.rng.10km) = "EVI_rng"
+EVI.std.10km <- raster("./Environmental layers/Enhanced Vegetation Index_std/EVIstd10km.grd")
+names(EVI.std.10km) = "EVI_std"
+FOR.cov <- raster("./Environmental layers/Vegetation coverage/Forest coverage/FORcov.grd")
+names(FOR.cov) = "FOREST_cov"
+GRASS.cov <- raster("./Environmental layers/Vegetation coverage/Grassland coverage/GRASScov.grd")
+names(GRASS.cov) = "GRASS_cov"
+WATB.cov <- raster("./Environmental layers/Vegetation coverage/Water Bodies/WATBcov.grd")
+names(WATB.cov) = "WATBODIES_cov"
+elevation.10km <- raster("./Environmental layers/Elevation/Elevation10km.grd")
+names(elevation.10km) = "Elevation"
+slope <-raster("./Environmental layers/Slope/Slope.grd")
+names(slope) = "Slope"
+aspect <-raster("./Environmental layers/Aspect/Aspect.grd")
+names(aspect) = "Aspect"
+roughness.10km <- raster("./Environmental layers/Terrain Roughness Index/Roughness10km.grd")
+names(roughness.10km) = "Roughness"
+topowet.10km <- raster("./Environmental layers/Topographic Wetness Index/TopoWet10km.grd")
+names(topowet.10km) = "TopoWet"
+PET.10km <- raster("./Environmental layers/Potential Evapotranspiration/Global PET - Annual/PET10km.grd")
+names(PET.10km) = "Annual PET"
+PET.cq <- raster("./Environmental layers/Potential Evapotranspiration/PET Coldest Quarter/PETcq.grd")
+names(PET.cq) = "PET_ColdQuart"
+PET.dq <- raster("./Environmental layers/Potential Evapotranspiration/PET Driest Quarter/PETdq.grd")
+names(PET.dq) = "PET_DriQuart"
+PET.wq <- raster("./Environmental layers/Potential Evapotranspiration/PET Warmest Quarter/PETwq.grd")
+names(PET.wq) = "PET_WarmQuart"
+PET.wetq <-raster("./Environmental layers/Potential Evapotranspiration/PET Wettest Quarter/PETwetq.grd")
+names(PET.wetq) = "PET_WetQuart"
+PET.seas <-raster("./Environmental layers/Potential Evapotranspiration/PET Seasonality/PETseas.grd")
+names(PET.seas) = "PET_Seas"
 Aridity.10km <-raster("./Environmental layers/Global Aridity/Global Aridity - Annual/Aridity10km")
+names(Aridity.10km) = "Aridity"
 AET.10km <-raster("./Environmental layers/Actual Evapotranspiration/Mean Annual AET/AET10km.grd")
+names(AET.10km) = "AET" 
 SWS.mean.10km <-raster("./Environmental layers/Soil Water Stress/Monthly Soil Water Stress/SWSmean10km.grd")
+names(SWS.mean.10km) = "SWS_mean"
 SWS.max.10km <-raster("./Environmental layers/Soil Water Stress/Monthly Soil Water Stress/SWSmax10km.grd")
+names(SWS.max.10km) = "SWS_max"
 SWS.min.10km <-raster("./Environmental layers/Soil Water Stress/Monthly Soil Water Stress/SWSmin10km.grd")
+names(SWS.min.10km) = "SWS_min"
+relief.10km <-raster("./Environmental layers/Global Relief Model/relief10km.grd")
+names(relief.10km) = "Relief"
 Humidity.3pm.mean.10km <-raster("./Environmental layers/Relative Humidity 3pm/Humidity3pmMean10km.grd")
+names(Humidity.3pm.mean.10km) = "Humidity3pm_mean"
 Humidity.3pm.min.10km <-raster("./Environmental layers/Relative Humidity 3pm/Humidity3pmMin10km.grd")
+names(Humidity.3pm.min.10km) = "Humidity3pm_min"
 Humidity.3pm.max.10km <-raster("./Environmental layers/Relative Humidity 3pm/Humidity3pmMax10km.grd")
+names(Humidity.3pm.max.10km) = "Humidity3pm_max"
 Humidity.9am.mean.10km <-raster("./Environmental layers/Relative Humidity 9am/Humidity9amMean10km.grd")
+names(Humidity.9am.mean.10km) = "Humidity9am_mean"
 Humidity.9am.max.10km <-raster("./Environmental layers/Relative Humidity 9am/Humidity9amMax10km.grd")
+names(Humidity.9am.max.10km) = "Humidity9am_max"
 Humidity.9am.min.10km <-raster("./Environmental layers/Relative Humidity 9am/Humidity9amMin10km.grd")
-
+names(Humidity.9am.min.10km) = "Humidity9am_min"
+BulkDensity <- raster("./Environmental layers/Soil Grids/Bulk Density/BulkDensity.grd")
+names(BulkDensity) = "BulkDensity"
+Clay <- raster("./Environmental layers/Soil Grids/Clay Content/Clay.grd")
+names(Clay) = "Clay"
+Coarse <- raster("./Environmental layers/Soil Grids/Coarse Fragments/Coarse.grd")
+names(Coarse) = "Coarse"
+Sand <- raster("./Environmental layers/Soil Grids/Sand Content/Sand.grd")
+names(Sand) = "Sand"
+Silt <- raster("./Environmental layers/Soil Grids/Silt Content/Silt.grd")
+names(Silt) = "Silt"
+BDRLOG <- raster("./Environmental layers/Soil Grids/BDRLOG/BDRLOG.grd")
+names(BDRLOG) = "BDRLOG"
+BDRICM <- raster("./Environmental layers/Soil Grids/Depth to Bedrock/BDRICM.grd")
+names(BDRICM) = "BDRICM"
+CARBON <- raster("./Environmental layers/Soil Grids/Carbon stock/CARBON.grd")
+names(CARBON) = "CARBON"
+pH_H20 <- raster("./Environmental layers/Soil Grids/PHIHOX/pH_w.grd")
+names(pH_H20) = "pH_H20"
+CEC <- raster("./Environmental layers/Soil Grids/CECSOL/CEC.grd")
+names(CEC) = "CEC"
 
 
 #########################################################################
 ############### Stacking all environmental layers #######################
 #########################################################################
-bio.crop <- stack(bio.wc2, 
+
+# If you wish to use the layers from WorldClim 2.0 instead of the layers 
+# from CHELSA, you should replace bioclim by bio.wc below.
+
+bio.crop <- stack(bioclim, 
 	solar.radiation.mean, solar.radiation.max, solar.radiation.min, 
 	water.vapor.pressure.mean, water.vapor.pressure.max, water.vapor.pressure.min, 
 	wind.speed.mean, wind.speed.max, wind.speed.min, 
-	PET.10km, Aridity.10km, AET.10km, 
+	cloud.cover.mean, cloud.cover.max, cloud.cover.min,
+	EVI.cv.10km, EVI.rng.10km, EVI.std.10km, FOR.cov, GRASS.cov, WATB.cov,
+	elevation.10km, relief.10km, slope, aspect, roughness.10km, topowet.10km,
+	PET.10km, PET.cq, PET.dq, PET.wq, PET.wetq, PET.seas, Aridity.10km, AET.10km,
 	SWS.mean.10km, SWS.min.10km, SWS.max.10km,
-	Humidity.3pm.mean.10km, Humidity.3pm.min.10km, Humidity.3pm.max.10km, Humidity.9am.mean.10km, Humidity.9am.max.10km, Humidity.9am.min.10km)
+	Humidity.3pm.mean.10km, Humidity.3pm.min.10km, Humidity.3pm.max.10km, Humidity.9am.mean.10km, Humidity.9am.max.10km, Humidity.9am.min.10km,
+	BulkDensity, Clay, Coarse, Sand, Silt, BDRLOG, BDRICM, CARBON, pH_H20,CEC)
 bio.crop
-res(bio.crop)
+ext<-extract(bio.crop,spp)
+edit(ext)
+write.table(ext,"Variables for each site.csv")
+res(bio.crop) ##0.083 = aprox. 10km
+
 
 
 #################################################################
 ##################### PCA #######################################
 #################################################################
+#install.packages("FactoMineR")
+#library(FactoMineR)
+#bio.crop.df<-as.data.frame(bio.crop)
+#PCA<-PCA(bio.crop.df)
 
-env.selected1 <- rasterPCA(bio.crop, nComp=8, spca = TRUE)
-# Here I selected the first 8 components because they account for about 95% 
-# of the total variance considering the 40 predictors of this routine for the 
-# entire Neotropical Region.
+memory.limit(1000000)
+env.selected1 <- rasterPCA(bio.crop, nComp=13, spca = TRUE, bylayer=TRUE, filename="PCA.grd", overwrite=TRUE)
 
-summary(env.selected1$model)
-plot(env.selected1$model)
+# Here I selected the first 13 components because they account for 90% 
+# of the total variance considering the 70 predictors of this routine for the 
+# entire Neotropical Region (10-km resolution).
+
+
+summary(env.selected1$model) #to verify the explanation of each PCA component
+loadings(env.selected1$model) #to verify the relative importance of each variable for each PCA component
 env.selected <-stack(env.selected1$map)
 env.selected
+res(env.selected)
 plot(env.selected)
 names(env.selected)
-
-
-# Selecting spatially unique records #
-mask <-bio.crop[[1]]
-cell <- cellFromXY(mask, spp[,1:2]) # get the cell number for each point
-cell
-dup <- duplicated(cbind(spp[,1:2],cell))
-spp <- spp[!dup, ]# select the records that are not duplicated
-dim(spp)
 
 
 ### Creating other required objects for BIOMOD_Formating Data:
@@ -400,32 +933,43 @@ occurrence.resp <-  rep(1, length(myRespXY$long))
 ## BUILDING THE MODELS ##
 #################################################
 
-setwd("C:/Models")
+setwd(choose.dir())
+getwd()
 
-### for example, number of species occurrence records = 93
-# Prepare data
 
+
+### According to Barbet-Massin et al. (2012), one should using 
+### the same number of pseudo-absences as available presences
+### for classification techniques such as boosted regression
+### trees, classification trees and random forest.
+### For example, if the number of species occurrence records = 20,
+### PA.nb.absences should be 20.
+
+dim(spp)
+PA.number <- length(spp[,1])
+PA.number #numero de pontos de ocorrencia espacialmente unicos
+
+# Prepare data (Algorithms: CTA, RF, GBM; see Barbet-Massin et al. 2012)
 sppBiomodData.PA.equal <- BIOMOD_FormatingData(
 	resp.var = occurrence.resp,
 	expl.var = env.selected,
 	resp.xy = myRespXY,
 	resp.name = "Occurrence",
 	PA.nb.rep = 10,
-	PA.nb.absences = 93,
-	PA.strategy = "sre",
-	PA.sre.quant = 0.025)
+	PA.nb.absences = PA.number, #Exatamente o mesmo número de registros
+	PA.strategy = "random")
 sppBiomodData.PA.equal
 
-sppBiomodData.PA.10000 <- BIOMOD_FormatingData(
+# Prepare data (Algorithms: ANN, SRE, FDA, GLM, GAM, MAXENT, MARS; see Barbet-Massin et al. 2012)
+sppBiomodData.PA.1000 <- BIOMOD_FormatingData(
 	resp.var = occurrence.resp,
 	expl.var = env.selected,
 	resp.xy = myRespXY,
 	resp.name = "Occurrence",
 	PA.nb.rep = 10,
-	PA.nb.absences = 10000,
-	PA.strategy = "sre",
-	PA.sre.quant = 0.025)
-sppBiomodData.PA.10000
+	PA.nb.absences = 1000,
+	PA.strategy = "random")
+sppBiomodData.PA.1000
 
 
 # MaxEnt .jar
@@ -439,20 +983,20 @@ sppBiomodData.PA.10000
   } 
 system.file("java", package = "dismo")
 
-# Path to MAXENT
-myBiomodOption <- BIOMOD_ModelingOptions(MAXENT.Phillips = list(path_to_maxent.jar="C:/Users/R/win-library/3.3/dismo/java"))
+# Path to MAXENT (Exactly the same path showed above):
+myBiomodOption <- BIOMOD_ModelingOptions(MAXENT.Phillips = list(path_to_maxent.jar=paste0(system.file(package = "dismo"), "/java/maxent.jar")))
 
 
-# In this case, 70% of data will be used to train and 30% will be used to test the model:
-### Note that keeping VarImport = 100 implies in a very time-consuming process! Unless obtaining the relative importance of
-### predictors is a priority for you, I suggest you changing '100' to 'FALSE'.
+### Note that changing VarImport from FALSE to 100 (for example) implies in a very time-consuming process! 
+### Unless obtaining the relative importance of predictors is a priority for you, I suggest you keeping it as 'FALSE'.
+
 sppModelOut.PA.equal <- BIOMOD_Modeling(sppBiomodData.PA.equal, 
 	models = c("GBM", "CTA", "RF"), 
 	NbRunEval = 10,
-	DataSplit = 70, 
-	Prevalence = NULL, 
-	VarImport = 100,
-	models.eval.meth = c("KAPPA","TSS","ROC","SR","POD","ACCURACY","BIAS"),
+	DataSplit = 70, #percentage of data used to build (train) models
+	Prevalence = 0.5, #The presences will have the same importance as the absences
+	VarImport = FALSE,
+	models.eval.meth = c("TSS","ROC"),
 	SaveObj = TRUE,
 	rescal.all.models = FALSE,
 	do.full.models = FALSE,
@@ -461,75 +1005,80 @@ sppModelOut.PA.equal
 
 
 # Parallel processing
-cl <- makeCluster(detectCores()) # number of cores in computer
-registerDoParallel(cl)
-getDoParWorkers()
+#cl <- makeCluster(detectCores()) # number of cores in computer
+#registerDoParallel(cl)
+#getDoParWorkers()
 
-### Note that keeping VarImport = 100 implies in a very time-consuming process! Unless obtaining the relative importance of
-### predictors is a priority for you, I suggest you changing '100' to 'FALSE'.
-sppModelOut.PA.10000 <- BIOMOD_Modeling( 
-	sppBiomodData.PA.10000, 
-	models = c("GLM","GAM","ANN","SRE","FDA","MARS","MAXENT.Phillips"), 
+                  
+sppModelOut.PA.1000 <- BIOMOD_Modeling( 
+	sppBiomodData.PA.1000, 
+	models = c("MAXENT.Phillips","GLM","GAM","ANN","SRE","FDA","MARS"), 
 	models.options = myBiomodOption, 
 	NbRunEval = 10,
 	DataSplit = 70, 
-	Prevalence = NULL, 
-	VarImport = 100,
-	models.eval.meth = c("KAPPA","TSS","ROC","SR","POD","ACCURACY","BIAS"),
+	Prevalence = 0.5, 
+	VarImport = FALSE,
+	models.eval.meth = c("TSS","ROC"),
 	SaveObj = TRUE,
 	rescal.all.models = FALSE,
 	do.full.models = FALSE,
 	modeling.id = "spp")
-sppModelOut.PA.10000
+sppModelOut.PA.1000
 
 
 ###################################
 ####### EVALUATING MODELS #########
 ###################################
 
+# Get variables importance:
+#sppVarsEval.PA.equal <- get_variables_importance(sppModelOut.PA.equal)
+#sppVarsEval.PA.equal
+#write.table(sppVarsEval.PA.equal, "VariablesImportance1.csv")
+
+#sppVarsEval.PA.1000 <- get_variables_importance(sppModelOut.PA.1000)
+#sppVarsEval.PA.1000
+#write.table(sppVarsEval.PA.1000, "VariablesImportance2.csv")
+
+
 # Get evaluations
 sppModelEval.PA.equal <- get_evaluations(sppModelOut.PA.equal)
 sppModelEval.PA.equal
-sppVarsEval.PA.equal <- get_variables_importance(sppModelOut.PA.equal)
-sppVarsEval.PA.equal
-write.table(sppVarsEval.PA.equal, "VariablesImportance1.csv")
+write.table(sppModelEval.PA.equal, "Evaluations_All-1.csv")
 
-sppModelEval.PA.10000 <- get_evaluations(sppModelOut.PA.10000)
-sppModelEval.PA.10000
-sppVarsEval.PA.10000 <- get_variables_importance(sppModelOut.PA.10000)
-sppVarsEval.PA.10000
-write.table(sppVarsEval.PA.10000, "VariablesImportance2.csv")
+sppModelEval.PA.1000 <- get_evaluations(sppModelOut.PA.1000)
+sppModelEval.PA.1000
+write.table(sppModelEval.PA.1000, "Evaluations_All-2.csv")
 
 # Get summaries (mean and std.dev.) of model evaluation - 1
 sdm.models1 <- c("GBM","CTA","RF") #3 models
 sdm.models1
-eval.methods1 <- c("KAPPA","TSS","ROC","SR","FAR","ACCURACY","BIAS") #7 evaluation methods
+eval.methods1 <- c("TSS","ROC") #2 evaluation methods
 eval.methods1
 
 means.i <- numeric(0)
-means.j <- numeric(7)
+means.j <- numeric(2)
 for (i in 1:3){
-	for (j in 1:7){
+	for (j in 1:2){
 	means.j[j] <- mean(sppModelEval.PA.equal[paste(eval.methods1[j]),"Testing.data",paste(sdm.models1[i]),,])
 	}
 	means.i <- c(means.i, means.j)
 }
 
-summary.eval.equal <- data.frame(rep(sdm.models1,each=7), rep(eval.methods1,3), means.i)
+summary.eval.equal <- data.frame(rep(sdm.models1,each=2), rep(eval.methods1,3), means.i)
 names(summary.eval.equal) <- c("Model", "Method", "Mean")
 summary.eval.equal
 write.table(summary.eval.equal,"Models1_Evaluation_Mean.csv")
 
 sd.i <- numeric(0)
-sd.j <- numeric(7)
+sd.j <- numeric(2)
 for (i in 1:3){
-	for (j in 1:7){
+	for (j in 1:2){
 	sd.j[j] <- sd(sppModelEval.PA.equal[paste(eval.methods1[j]),"Testing.data",paste(sdm.models1[i]),,])
 	}
 	sd.i <- c(sd.i, sd.j)
 }
 
-summary.eval.equal <- data.frame(rep(sdm.models1,each=7), rep(eval.methods1,3), sd.i)
+summary.eval.equal <- data.frame(rep(sdm.models1,each=2), rep(eval.methods1,3), sd.i)
 names(summary.eval.equal) <- c("Model", "Method", "SD")
 summary.eval.equal
 write.table(summary.eval.equal,"Models1_Evaluation_SD.csv")
@@ -538,41 +1087,326 @@ write.table(summary.eval.equal,"Models1_Evaluation_SD.csv")
 # Get summaries (mean and std.dev.) of model evaluation - 2
 sdm.models2 <- c("GLM","GAM","ANN","SRE","MARS","MAXENT.Phillips","FDA") #7 models
 sdm.models2
-eval.methods2 <- c("KAPPA","TSS","ROC","SR","FAR","ACCURACY","BIAS") #7 evaluation methods
+eval.methods2 <- c("TSS","ROC") #2 evaluation methods
 eval.methods2
 
 means.i <- numeric(0)
-means.j <- numeric(7)
+means.j <- numeric(2)
 for (i in 1:7){
-	for (j in 1:7){
-	means.j[j] <- mean(sppModelEval.PA.10000[paste(eval.methods2[j]),"Testing.data",paste(sdm.models2[i]),,], na.rm=T)
+	for (j in 1:2){
+	means.j[j] <- mean(sppModelEval.PA.1000[paste(eval.methods2[j]),"Testing.data",paste(sdm.models2[i]),,], na.rm=T)
 	}
 	means.i <- c(means.i, means.j)
 }
 
-summary.eval.10000 <- data.frame(rep(sdm.models2,each=7), rep(eval.methods2,7), means.i)
-names(summary.eval.10000) <- c("Model", "Method", "Mean")
-summary.eval.10000
-write.table(summary.eval.10000,"Models2_Evaluation_Mean.csv")
+summary.eval.1000 <- data.frame(rep(sdm.models2,each=2), rep(eval.methods2,7), means.i)
+names(summary.eval.1000) <- c("Model", "Method", "Mean")
+summary.eval.1000
+write.table(summary.eval.1000,"Models2_Evaluation_Mean.csv")
 
 sd.i <- numeric(0)
-sd.j <- numeric(7)
+sd.j <- numeric(2)
 for (i in 1:7){
-	for (j in 1:7){
-	sd.j[j] <- sd(sppModelEval.PA.10000[paste(eval.methods2[j]),"Testing.data",paste(sdm.models2[i]),,])
+	for (j in 1:2){
+	sd.j[j] <- sd(sppModelEval.PA.1000[paste(eval.methods2[j]),"Testing.data",paste(sdm.models2[i]),,])
 	}
 	sd.i <- c(sd.i, sd.j)
 }
 
-summary.eval.10000 <- data.frame(rep(sdm.models2,each=7), rep(eval.methods2,7), sd.i)
-names(summary.eval.10000) <- c("Model", "Method", "SD")
-summary.eval.10000
-write.table(summary.eval.10000,"Models2_Evaluation_SD.csv")
+summary.eval.1000 <- data.frame(rep(sdm.models2,each=2), rep(eval.methods2,7), sd.i)
+names(summary.eval.1000) <- c("Model", "Method", "SD")
+summary.eval.1000
+write.table(summary.eval.1000,"Models2_Evaluation_SD.csv")
 
 
 
-### Which algorithms should be retained for the ensemble model?
 
+## Calculating Sensitivity and Specificity for ROC threshold:
+## Evaluation Scores of the  Projections with PA.equal
+(scores_equal <- get_evaluations(sppModelOut.PA.equal))
+scores_ROC <- as.numeric(scores_equal["ROC","Cutoff",,,])
+write.table(scores_ROC, "scores_equal_.csv")
+## Scores GBM ###
+scores_ROC_GBM_TD <- as.numeric(scores_equal["ROC","Cutoff", "GBM",,])
+scores_ROC_GBM_SN <- as.numeric(scores_equal["ROC","Sensitivity", "GBM",,])
+scores_ROC_GBM_SP <- as.numeric(scores_equal["ROC","Specificity", "GBM",,])
+scores_ROC_GBM_TD
+scores_ROC_GBM_SN
+scores_ROC_GBM_SP
+th_GBM_TD <-mean(scores_ROC_GBM_TD)
+th_GBM_SN <-mean(scores_ROC_GBM_SN)
+th_GBM_SP <-mean(scores_ROC_GBM_SP)
+th_GBM_TD 
+th_GBM_SN
+th_GBM_SP
+## Optional 
+write.table(th_GBM_TD, "scores_ROC_GBM_TD.csv")
+write.table(th_GBM_TD, "scores_ROC_GBM_TD.csv")
+write.table(th_GBM_SN, "scores_ROC_GBM_SN.csv")
+write.table(th_GBM_SP, "scores_ROC_GBM_SP.csv")
+## Scores CTA ###
+scores_ROC_CTA_TD <- as.numeric(scores_equal["ROC","Cutoff", "CTA",,])
+scores_ROC_CTA_SN <- as.numeric(scores_equal["ROC","Sensitivity", "CTA",,])
+scores_ROC_CTA_SP <- as.numeric(scores_equal["ROC","Specificity", "CTA",,])
+scores_ROC_CTA_TD
+scores_ROC_CTA_SN
+scores_ROC_CTA_SP
+th_CTA_TD <-mean(scores_ROC_CTA_TD)
+th_CTA_SN <-mean(scores_ROC_CTA_SN)
+th_CTA_SP <-mean(scores_ROC_CTA_SP)
+th_CTA_TD 
+th_CTA_SN
+th_CTA_SP
+## Optional 
+write.table(th_CTA_TD, "scores_ROC_CTA_TD.csv")
+write.table(th_CTA_TD, "scores_ROC_CTA_TD.csv")
+write.table(th_CTA_SN, "scores_ROC_CTA_SN.csv")
+write.table(th_CTA_SP, "scores_ROC_CTA_SP.csv")
+## Scores RF ###
+scores_ROC_RF_TD <- as.numeric(scores_equal["ROC","Cutoff", "RF",,])
+scores_ROC_RF_SN <- as.numeric(scores_equal["ROC","Sensitivity", "RF",,])
+scores_ROC_RF_SP <- as.numeric(scores_equal["ROC","Specificity", "RF",,])
+scores_ROC_RF_TD
+scores_ROC_RF_SN
+scores_ROC_RF_SP
+th_RF_TD <-mean(scores_ROC_RF_TD)
+th_RF_SN <-mean(scores_ROC_RF_SN)
+th_RF_SP <-mean(scores_ROC_RF_SP)
+th_RF_TD 
+th_RF_SN
+th_RF_SP
+## Optional 
+write.table(th_RF_TD, "scores_ROC_RF_TD.csv")
+write.table(th_RF_TD, "scores_ROC_RF_TD.csv")
+write.table(th_RF_SN, "scores_ROC_RF_SN.csv")
+write.table(th_RF_SP, "scores_ROC_RF_SP.csv")
+## Evaluation Scores of the  Projections with PA.1000
+(scores_1000 <- get_evaluations(sppModelOut.PA.1000))
+scores_ROC_1000 <- as.numeric(scores_1000["ROC","Cutoff",,,])
+## Scores GLM ###
+scores_ROC_GLM_TD <- as.numeric(scores_1000["ROC","Cutoff", "GLM",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_GLM_SN <- as.numeric(scores_1000["ROC","Sensitivity", "GLM",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_GLM_SP <- as.numeric(scores_1000["ROC","Specificity", "GLM",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_GLM_TD
+scores_ROC_GLM_SN
+scores_ROC_GLM_SP
+th_GLM_TD <-mean(scores_ROC_GLM_TD)
+th_GLM_SN <-mean(scores_ROC_GLM_SN)
+th_GLM_SP <-mean(scores_ROC_GLM_SP)
+th_GLM_TD 
+th_GLM_SN
+th_GLM_SP
+## Optional 
+write.table(th_GLM_TD, "scores_ROC_GLM_TD.csv")
+write.table(th_GLM_TD, "scores_ROC_GLM_TD.csv")
+write.table(th_GLM_SN, "scores_ROC_GLM_SN.csv")
+write.table(th_GLM_SP, "scores_ROC_GLM_SP.csv")
+## Scores GAM ###
+scores_ROC_GAM_TD <- as.numeric(scores_1000["ROC","Cutoff", "GAM",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_GAM_SN <- as.numeric(scores_1000["ROC","Sensitivity", "GAM",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_GAM_SP <- as.numeric(scores_1000["ROC","Specificity", "GAM",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_GAM_TD
+scores_ROC_GAM_SN
+scores_ROC_GAM_SP
+th_GAM_TD <-mean(scores_ROC_GAM_TD)
+th_GAM_SN <-mean(scores_ROC_GAM_SN)
+th_GAM_SP <-mean(scores_ROC_GAM_SP)
+th_GAM_TD 
+th_GAM_SN
+th_GAM_SP
+## Optional 
+write.table(th_GAM_TD, "scores_ROC_GAM_TD.csv")
+write.table(th_GAM_TD, "scores_ROC_GAM_TD.csv")
+write.table(th_GAM_SN, "scores_ROC_GAM_SN.csv")
+write.table(th_GAM_SP, "scores_ROC_GAM_SP.csv")
+## Scores ANN ###
+scores_ROC_ANN_TD <- as.numeric(scores_1000["ROC","Cutoff", "ANN",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_ANN_SN <- as.numeric(scores_1000["ROC","Sensitivity", "ANN",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_ANN_SP <- as.numeric(scores_1000["ROC","Specificity", "ANN",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_ANN_TD
+scores_ROC_ANN_SN
+scores_ROC_ANN_SP
+th_ANN_TD <-mean(scores_ROC_ANN_TD)
+th_ANN_SN <-mean(scores_ROC_ANN_SN)
+th_ANN_SP <-mean(scores_ROC_ANN_SP)
+th_ANN_TD 
+th_ANN_SN
+th_ANN_SP
+## Optional 
+write.table(th_ANN_TD, "scores_ROC_ANN_TD.csv")
+write.table(th_ANN_TD, "scores_ROC_ANN_TD.csv")
+write.table(th_ANN_SN, "scores_ROC_ANN_SN.csv")
+write.table(th_ANN_SP, "scores_ROC_ANN_SP.csv")
+## Scores SRE ###
+scores_ROC_SRE_TD <- as.numeric(scores_1000["ROC","Cutoff", "SRE",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_SRE_SN <- as.numeric(scores_1000["ROC","Sensitivity", "SRE",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_SRE_SP <- as.numeric(scores_1000["ROC","Specificity", "SRE",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_SRE_TD
+scores_ROC_SRE_SN
+scores_ROC_SRE_SP
+th_SRE_TD <-mean(scores_ROC_SRE_TD)
+th_SRE_SN <-mean(scores_ROC_SRE_SN)
+th_SRE_SP <-mean(scores_ROC_SRE_SP)
+th_SRE_TD 
+th_SRE_SN
+th_SRE_SP
+## Optional 
+write.table(th_SRE_TD, "scores_ROC_SRE_TD.csv")
+write.table(th_SRE_TD, "scores_ROC_SRE_TD.csv")
+write.table(th_SRE_SN, "scores_ROC_SRE_SN.csv")
+write.table(th_SRE_SP, "scores_ROC_SRE_SP.csv")
+## Scores FDA ###
+scores_ROC_FDA_TD <- as.numeric(scores_1000["ROC","Cutoff", "FDA",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_FDA_SN <- as.numeric(scores_1000["ROC","Sensitivity", "FDA",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_FDA_SP <- as.numeric(scores_1000["ROC","Specificity", "FDA",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_FDA_TD
+scores_ROC_FDA_SN
+scores_ROC_FDA_SP
+th_FDA_TD <-mean(scores_ROC_FDA_TD)
+th_FDA_SN <-mean(scores_ROC_FDA_SN)
+th_FDA_SP <-mean(scores_ROC_FDA_SP)
+th_FDA_TD 
+th_FDA_SN
+th_FDA_SP
+## Optional 
+write.table(th_FDA_TD, "scores_ROC_FDA_TD.csv")
+write.table(th_FDA_TD, "scores_ROC_FDA_TD.csv")
+write.table(th_FDA_SN, "scores_ROC_FDA_SN.csv")
+write.table(th_FDA_SP, "scores_ROC_FDA_SP.csv")
+## Scores MARS ###
+scores_ROC_MARS_TD <- as.numeric(scores_1000["ROC","Cutoff", "MARS",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_MARS_SN <- as.numeric(scores_1000["ROC","Sensitivity", "MARS",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_MARS_SP <- as.numeric(scores_1000["ROC","Specificity", "MARS",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_MARS_TD
+scores_ROC_MARS_SN
+scores_ROC_MARS_SP
+th_MARS_TD <-mean(scores_ROC_MARS_TD)
+th_MARS_SN <-mean(scores_ROC_MARS_SN)
+th_MARS_SP <-mean(scores_ROC_MARS_SP)
+th_MARS_TD 
+th_MARS_SN
+th_MARS_SP
+## Optional 
+write.table(th_MARS_TD, "scores_ROC_MARS_TD.csv")
+write.table(th_MARS_TD, "scores_ROC_MARS_TD.csv")
+write.table(th_MARS_SN, "scores_ROC_MARS_SN.csv")
+write.table(th_MARS_SP, "scores_ROC_MARS_SP.csv")
+##Scores MAXENT.Phillips
+## Scores MAXENT.Phillips ###
+scores_ROC_MAXENT.Phillips_TD <- as.numeric(scores_1000["ROC","Cutoff", "MAXENT.Phillips",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_MAXENT.Phillips_SN <- as.numeric(scores_1000["ROC","Sensitivity", "MAXENT.Phillips",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_MAXENT.Phillips_SP <- as.numeric(scores_1000["ROC","Specificity", "MAXENT.Phillips",,]) # CAUTION : Remove score  of the Models failed
+scores_ROC_MAXENT.Phillips_TD
+scores_ROC_MAXENT.Phillips_SN
+scores_ROC_MAXENT.Phillips_SP
+th_MAXENT.Phillips_TD <-mean(scores_ROC_MAXENT.Phillips_TD)
+th_MAXENT.Phillips_SN <-mean(scores_ROC_MAXENT.Phillips_SN)
+th_MAXENT.Phillips_SP <-mean(scores_ROC_MAXENT.Phillips_SP)
+th_MAXENT.Phillips_TD 
+th_MAXENT.Phillips_SN
+th_MAXENT.Phillips_SP
+## Optional 
+write.table(th_MAXENT.Phillips_TD, "scores_ROC_MAXENT.Phillips_TD.csv")
+write.table(th_MAXENT.Phillips_TD, "scores_ROC_MAXENT.Phillips_TD.csv")
+write.table(th_MAXENT.Phillips_SN, "scores_ROC_MAXENT.Phillips_SN.csv")
+write.table(th_MAXENT.Phillips_SP, "scores_ROC_MAXENT.Phillips_SP.csv")
+
+
+
+## Calculating ROC Thresholds
+(scores_equal <- get_evaluations(sppModelOut.PA.equal))
+scores_ROC <- as.numeric(scores_equal["ROC","Cutoff",,,])
+write.table(scores_ROC, "scores_equal_.csv")
+
+##Scores GBM
+scores_ROC_GBM <- as.numeric(scores_equal["ROC","Cutoff", "GBM",,])
+scores_ROC_GBM <-na.exclude(scores_ROC_GBM) 
+th_GBM <-mean(scores_ROC_GBM)/10
+th_GBM
+write.table(th_GBM, "scores_ROC_GBM_.csv")
+
+##Scores CTA
+scores_ROC_CTA <- as.numeric(scores_equal["ROC","Cutoff", "CTA",,])
+scores_ROC_CTA <-na.exclude(scores_ROC_CTA)
+th_CTA <-mean(scores_ROC_CTA)/10
+th_CTA
+write.table(th_CTA, "scores_ROC_CTA_.csv")
+
+##Scores RF
+scores_ROC_RF <- as.numeric(scores_equal["ROC","Cutoff", "RF",,])
+scores_ROC_RF <-na.exclude(scores_ROC_RF)
+th_RF <- mean(scores_ROC_RF)/10
+th_RF
+write.table(th_RF, "scores_ROC_RF_.csv")
+
+## Evaluation Scores of the  Projections with PA.10000
+(scores_10000 <- get_evaluations(sppModelOut.PA.1000))
+scores_ROC_10000 <- as.numeric(scores_10000["ROC","Cutoff",,,])
+##Scores GLM
+scores_ROC_GLM <- as.numeric(scores_10000["ROC","Cutoff", "GLM",,])
+scores_ROC_GLM <-na.exclude(scores_ROC_GLM)
+th_GLM <- mean(scores_ROC_GLM)/10
+th_GLM
+write.table(th_GLM, "scores_ROC_GLM_.csv")
+
+##Scores GAM
+scores_ROC_GAM <- as.numeric(scores_10000["ROC","Cutoff", "GAM",,]) 
+scores_ROC_GAM<- na.exclude(scores_ROC_GAM)
+th_GAM <- mean(scores_ROC_GAM)/10
+th_GAM
+write.table(th_GAM, "scores_ROC_GAM_.csv")
+
+##Scores ANN
+scores_ROC_ANN <- as.numeric(scores_10000["ROC","Cutoff", "ANN",,]) 
+scores_ROC_ANN <-na.exclude(scores_ROC_ANN)
+th_ANN <- mean(scores_ROC_ANN)/10
+th_ANN
+write.table(th_ANN, "scores_ROC_ANN_.csv")
+
+##Scores SRE
+scores_ROC_SRE <- as.numeric(scores_10000["ROC","Cutoff", "SRE",,]) 
+scores_ROC_SRE <-na.exclude(scores_ROC_SRE)
+th_SRE <- mean(scores_ROC_SRE)/10
+th_SRE
+write.table(th_SRE, "scores_ROC_SRE_.csv")
+
+##Scores FDA
+scores_ROC_FDA <- as.numeric(scores_10000["ROC","Cutoff", "FDA",,]) 
+scores_ROC_FDA <- na.exclude(scores_ROC_FDA)
+th_FDA <- mean(scores_ROC_FDA)/10
+th_FDA
+write.table(th_FDA, "scores_ROC_FDA_.csv")
+
+##Scores MARS
+scores_ROC_MARS <- as.numeric(scores_10000["ROC","Cutoff", "MARS",,]) 
+scores_ROC_MARS <- na.exclude(scores_ROC_MARS)
+th_MARS <- mean(scores_ROC_MARS)/10
+th_MARS
+write.table(th_MARS, "scores_ROC_MARS_.csv")
+
+##Scores MAXENT.Phillips
+scores_ROC_MAXENT.Phillips <- as.numeric(scores_10000["ROC","Cutoff", "MAXENT.Phillips",,]) 
+scores_ROC_MAXENT.Phillips <- na.exclude(scores_ROC_MAXENT.Phillips)
+th_MAXENT.Phillips <- mean(scores_ROC_MAXENT.Phillips)/10
+th_MAXENT.Phillips
+write.table(th_MAXENT.Phillips, "scores_ROC_MAXENT.Phillips_.csv")
+
+####################################################################
+### Which algorithms should be retained for the ensemble model? ####
+####################################################################
+
+#Scores mean (Keep only the retained algorithms!!!)
+th_mean<- mean(th_CTA + th_RF + th_GBM + th_GAM + th_GLM + th_ANN + th_SRE + th_MARS + th_FDA + th_MAXENT.Phillips)/10#Somente os algoritmos selecionados
+th_mean
+write.table(th_mean, "scores_ROC_mean.csv")
+
+############################################################################
+
+
+# Parallel processing
+#cl <- makeCluster(detectCores()) # number of cores in computer
+#registerDoParallel(cl)
+#getDoParWorkers()
 
 
 #################################
@@ -584,144 +1418,116 @@ spp.projections_1 <- BIOMOD_Projection(
 	new.env = env.selected,
 	proj.name = "Cur1",
 	selected.models = "all",
-	binary.meth = "ROC",
 	output.format = ".grd")
 
 spp.projections_2 <- BIOMOD_Projection(
-	modeling.output = sppModelOut.PA.10000,
+	modeling.output = sppModelOut.PA.1000,
 	new.env = env.selected,
 	proj.name = "Cur2",
 	selected.models = "all",
-	binary.meth = "ROC",
 	output.format = ".grd")
 
 
+save.image()
+
 # Stack projections
-### You should define where is the file 'proj_Cur1_Occurrence.grd'
+### You should define the path to the file 'proj_Cur1_Occurrence.grd'
 projections_cont1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence.grd") #onde estão os modelos produzidos por GBM, CTA e RF
 names(projections_cont1)
-
-### You should define where is the file 'proj_Cur1_Occurrence_ROCbin.grd'
-projections_bin1 <-stack("./Occurrence/proj_Cur1/proj_Cur1_Occurrence_ROCbin.grd") #onde estão os modelos produzidos por GBM, CTA e RF
-names(projections_bin1)
-
-names(projections_bin1)=names(projections_cont1)
-names(projections_bin1)
-plot(projections_bin1)
-
 
 ### You should define the path to the file 'proj_Cur2_Occurrence.grd'
 projections_cont2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence.grd") #onde estão os modelos produzidos pelos demais algoritmos
 names(projections_cont2)
 
-### You should define the path to the file 'proj_Cur2_Occurrence_ROCbin.grd'
-projections_bin2 <-stack("./Occurrence/proj_Cur2/proj_Cur2_Occurrence_ROCbin.grd") #onde estão os modelos produzidos pelos demais algoritmos
-names(projections_bin2)
-
-names(projections_bin2)=names(projections_cont2)
-names(projections_bin2)
-plot(projections_bin2)
 
 
 ### Apply the steps below only for retained algorithms
-### Ensemble mean model for each algorithm:
-projections.RF.all <- subset(projections_bin1, grep("RF", names(projections_bin1)))
-projections.RF.mean <- mean(projections.RF.all)
-windows(w=6, h=6)
-plot(projections.RF.mean, col = matlab.like(100), main = "RF", las = 1)
-writeRaster(projections.RF.mean,"RF")
 
-projections.GBM.all <-subset(projections_bin1, grep("GBM", names(projections_bin1)))
-projections.GBM.mean <- mean(projections.GBM.all)
-windows(w=6, h=6)
-plot(projections.GBM.mean, col = matlab.like(100), main = "GBM", las = 1)
-
-projections.CTA.all <-subset(projections_bin1,grep("CTA", names(projections_bin1)))
-projections.CTA.mean <- mean(projections.CTA.all)
-windows(w=6, h=6)
-plot(projections.CTA.mean, col = matlab.like(100), main = "CTA", las = 1)
-
-projections.GLM.all <-subset(projections_bin2,grep("GLM", names(projections_bin2)))
-projections.GLM.mean <- mean(projections.GLM.all)
-windows(w=6, h=6)
-plot(projections.GLM.mean, col = matlab.like(100), main = "GLM", las = 1)
-
-projections.GAM.all <-subset(projections_bin2,grep("GAM", names(projections_bin2)))
-projections.GAM.mean <- mean(projections.GAM.all)
-windows(w=6, h=6)
-plot(projections.GAM.mean, col = matlab.like(100), main = "GAM", las = 1)
-
-projections.ANN.all <- subset(projections_bin2,grep("ANN", names(projections_bin2)))
-projections.ANN.mean <- mean(projections.ANN.all)
-windows(w=6, h=6)
-plot(projections.ANN.mean, col = matlab.like(100), main = "ANN", las = 1)
-
-projections.SRE.all <- subset(projections_bin2,grep("SRE", names(projections_bin2)))
-projections.SRE.mean <- mean(projections.SRE.all)
-windows(w=6, h=6)
-plot(projections.SRE.mean, col = matlab.like(100), main = "SRE", las = 1)
-
-projections.MARS.all <- subset(projections_bin2,grep("MARS", names(projections_bin2)))
-projections.MARS.mean <- mean(projections.MARS.all)
-windows(w=6, h=6)
-plot(projections.MARS.mean, col = matlab.like(100), main = "MARS", las = 1)
-
-projections.FDA.all <- subset(projections_bin2,grep("FDA", names(projections_bin2)))
-projections.FDA.mean <- mean(projections.FDA.all)
-windows(w=6, h=6)
-plot(projections.FDA.mean, col = matlab.like(100), main = "FDA", las = 1)
-
-projections.MAXENT.all <- subset(projections_bin2,grep("MAXENT.Phillips", names(projections_bin2)))
-projections.MAXENT.mean <- mean(projections.MAXENT.all)
-windows(w=6, h=6)
-plot(projections.MAXENT.mean, col = matlab.like(100), main = "MAXENT", las = 1)
-
-
-############################################################
-#### IF YOU PREFER TO OBTAIN ONLY CONTINUOUS PROJECTIONS ###
-############################################################
-
-### Apply the steps below only for retained algorithms
-### Ensemble mean model for each algorithm:
+### Ensemble mean model for each algorithm ###
 projections.RF.all <- subset(projections_cont1, grep("RF", names(projections_cont1)))
-projections.RF.mean <- mean(projections.RF.all)
-plot(projections.RF.mean, col = matlab.like(100), main = "RF", las = 1)
+projections.RF.mean <- mean(projections.RF.all)/10
+writeRaster(projections.RF.mean, filename="RF - Current Climate.tif", format="GTiff")
 
 projections.GBM.all <-subset(projections_cont1, grep("GBM", names(projections_cont1)))
-projections.GBM.mean <- mean(projections.GBM.all)
-plot(projections.GBM.mean, col = matlab.like(100), main = "GBM", las = 1)
+projections.GBM.mean <- mean(projections.GBM.all)/10
+writeRaster(projections.GBM.mean, filename="GBM - Current Climate.tif", format="GTiff")
 
 projections.CTA.all <-subset(projections_cont1,grep("CTA", names(projections_cont1)))
-projections.CTA.mean <- mean(projections.CTA.all)
-plot(projections.CTA.mean, col = matlab.like(100), main = "CTA", las = 1)
+projections.CTA.mean <- mean(projections.CTA.all)/10
+writeRaster(projections.CTA.mean, filename="CTA - Current Climate.tif", format="GTiff")
 
 projections.GLM.all <-subset(projections_cont2,grep("GLM", names(projections_cont2)))
-projections.GLM.mean <- mean(projections.GLM.all)
-plot(projections.GLM.mean, col = matlab.like(100), main = "GLM", las = 1)
+projections.GLM.mean <- mean(projections.GLM.all)/10
+writeRaster(projections.GLM.mean, filename="GLM - Current Climate.tif", format="GTiff")
 
 projections.GAM.all <-subset(projections_cont2,grep("GAM", names(projections_cont2)))
-projections.GAM.mean <- mean(projections.GAM.all)
-plot(projections.GAM.mean, col = matlab.like(100), main = "GAM", las = 1)
+projections.GAM.mean <- mean(projections.GAM.all)/10
+writeRaster(projections.GAM.mean, filename="GAM - Current Climate.tif", format="GTiff")
 
 projections.ANN.all <- subset(projections_cont2,grep("ANN", names(projections_cont2)))
-projections.ANN.mean <- mean(projections.ANN.all)
-plot(projections.ANN.mean, col = matlab.like(100), main = "ANN", las = 1)
+projections.ANN.mean <- mean(projections.ANN.all)/10
+writeRaster(projections.ANN.mean, filename="ANN - Current Climate.tif", format="GTiff")
 
 projections.SRE.all <- subset(projections_cont2,grep("SRE", names(projections_cont2)))
-projections.SRE.mean <- mean(projections.SRE.all)
-plot(projections.SRE.mean, col = matlab.like(100), main = "SRE", las = 1)
+projections.SRE.mean <- mean(projections.SRE.all)/10
+writeRaster(projections.SRE.mean, filename="SRE - Current Climate.tif", format="GTiff")
 
 projections.MARS.all <- subset(projections_cont2,grep("MARS", names(projections_cont2)))
-projections.MARS.mean <- mean(projections.MARS.all)
-plot(projections.MARS.mean, col = matlab.like(100), main = "MARS", las = 1)
+projections.MARS.mean <- mean(projections.MARS.all)/10
+writeRaster(projections.MARS.mean, filename="MARS - Current Climate.tif", format="GTiff")
 
 projections.FDA.all <- subset(projections_cont2,grep("FDA", names(projections_cont2)))
-projections.FDA.mean <- mean(projections.FDA.all)
-plot(projections.FDA.mean, col = matlab.like(100), main = "FDA", las = 1)
+projections.FDA.mean <- mean(projections.FDA.all)/10
+writeRaster(projections.FDA.mean, filename="FDA - Current Climate.tif", format="GTiff")
 
 projections.MAXENT.all <- subset(projections_cont2,grep("MAXENT.Phillips", names(projections_cont2)))
-projections.MAXENT.mean <- mean(projections.MAXENT.all)
+projections.MAXENT.mean <- mean(projections.MAXENT.all)/10
+writeRaster(projections.MAXENT.mean, filename="MAXENT - Current Climate.tif", format="GTiff")
+
+save.image()
+
+
+# If you wish to see the resulted maps...
+windows(w=6, h=6)
+plot(projections.RF.mean, col = matlab.like(100), main = "RF", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+
+windows(w=6, h=6)
+plot(projections.GBM.mean, col = matlab.like(100), main = "GBM", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+
+windows(w=6, h=6)
+plot(projections.CTA.mean, col = matlab.like(100), main = "CTA", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+
+windows(w=6, h=6)
+plot(projections.GLM.mean, col = matlab.like(100), main = "GLM", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+
+windows(w=6, h=6)
+plot(projections.GAM.mean, col = matlab.like(100), main = "GAM", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+
+windows(w=6, h=6)
+plot(projections.ANN.mean, col = matlab.like(100), main = "ANN", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+
+windows(w=6, h=6)
+plot(projections.SRE.mean, col = matlab.like(100), main = "SRE", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+
+windows(w=6, h=6)
+plot(projections.MARS.mean, col = matlab.like(100), main = "MARS", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+
+windows(w=6, h=6)
+plot(projections.FDA.mean, col = matlab.like(100), main = "FDA", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+
+windows(w=6, h=6)
 plot(projections.MAXENT.mean, col = matlab.like(100), main = "MAXENT", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+
 
 
 
@@ -731,10 +1537,14 @@ plot(projections.MAXENT.mean, col = matlab.like(100), main = "MAXENT", las = 1)
 
 projections.all.mean <- mean(projections.RF.mean + projections.GBM.mean +
 	projections.CTA.mean + projections.GLM.mean + projections.GAM.mean +
-	projections.ANN.mean + projections.SRE.mean + projections.MARS.mean + 
-	projections.FDA.mean + projections.MAXENT.mean)
-windows(w=6, h=6)
+	projections.ANN.mean + projections.SRE.mean + 
+	projections.MARS.mean + projections.FDA.mean +
+	projections.MAXENT.mean)/n #change n by the number of retained algorithms
 plot(projections.all.mean, col = matlab.like(100), main = "Ensemble - Current Climate", las = 1)
+plot(wrld_simpl, add = TRUE, col="transparent", border="white", lwd = 0.5)
+writeRaster(projections.all.mean, filename="Ensemble - Current Climate.tif", format="GTiff")
+writeRaster(projections.all.mean, filename="Ensemble - Current Climate.asc", format="ascii")
+
 
 
 # If you decide to include species occurrence records on the map:
@@ -746,18 +1556,22 @@ spp.spdf
 windows(w=6, h=6)
 plot(projections.all.mean, col = matlab.like(100), main = "Ensemble - Current Climate", las = 1)
 plot(spp.spdf, pch = 21, cex = 0.95, col = "gray20", bg = "green", add = T)
-plot(spp.spdf.e, pch = 21, cex = 0.95, col = "gray20", bg = "red", add = T)
 
 
-# You can also add shapefiles/rasters of protected areas, biogeographic regions, vegetation coverage etc.
+# You can also add shapefiles/rasters of protected areas, biogeographic regions etc.
+#UC <-readOGR("./Shapefiles/UCs federais/uc_fed_set_2016_site.shp")
 
 
 ## Convert final consensus map to binary
 ## *****************
 
-projections.mean.binary <- BinaryTransformation(projections.all.mean, 0.5) # Or replace 0.5 by another value.
+projections.mean.binary <- BinaryTransformation(projections.all.mean, th_mean) #th being a threshold value.
 class(projections.mean.binary)
-str(values(projections.mean.binary))
 summary(values(projections.mean.binary))
 windows(w=6, h=6)
-plot(projections.mean.binary, col = matlab.like(100), main = "Ensemble - Current Climate (Binary)", las = 1)
+plot(projections.mean.binary, col = matlab.like(100), main = "Binary Ensemble - Current Climate", las = 1)
+writeRaster(projections.mean.binary, filename="Binary Ensemble - Current Climate.tif", format="GTiff")
+
+save.image()
+
+
