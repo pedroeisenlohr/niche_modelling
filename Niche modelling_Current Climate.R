@@ -5,15 +5,16 @@
 #                SUMMARIZED IN PCA AXES            #######
 #-------------------------------------------------------#
 
+#Released on: October 18th, 2018
 
 
 # Contact: Pedro V. Eisenlohr (pedro.eisenlohr@unemat.br)
 
 
 #------------------------------------------------- Acknowledgments ------------------------------------------------------------####
-### Dr. Guarino Colli's team of Universidade de Brasília. #########################################################################
-### Dr. Diogo Souza Bezerra Rocha (Instituto de Pesquisas Jardim Botânico/RJ). ####################################################
-### Drª Marinez Ferreira de Siqueira (Instituto de Pesquisas Jardim Botânico/RJ). #################################################
+### Dr. Guarino Colli's team of Universidade de BrasÃ­lia. #########################################################################
+### Dr. Diogo Souza Bezerra Rocha (Instituto de Pesquisas Jardim BotÃ¢nico/RJ). ####################################################
+### DrÂª Marinez Ferreira de Siqueira (Instituto de Pesquisas Jardim BotÃ¢nico/RJ). #################################################
 ### My students of Ecology Lab, mainly J.C. Pires-de-Oliveira. ####################################################################
 #----------------------------------------- ---------------------------------------------------------------------------------------#
 
@@ -93,12 +94,12 @@
 		#Relative Humidity at 3 pm: Maximum, Minimum and Mean.
 
 ### Soil Variables (10 variables): Soil grids (https://soilgrids.org)
-		#BulkDensity = Bulk density (fine earth) in kg/cubic–meter
-		#Clay = Clay content (0–2 micro meter) mass fraction in %
+		#BulkDensity = Bulk density (fine earth) in kg/cubicâ€“meter
+		#Clay = Clay content (0â€“2 micro meter) mass fraction in %
 		#Coarse = Coarse fragments volumetric in %
-		#Sand = Sand content (50–2000 micro meter) mass fraction in %
-		#Silt = Silt content (2–50 micro meter) mass fraction in %
-		#BDRLOG = Predicted probability of occurrence (0–100%) of R horizon
+		#Sand = Sand content (50â€“2000 micro meter) mass fraction in %
+		#Silt = Silt content (2â€“50 micro meter) mass fraction in %
+		#BDRLOG = Predicted probability of occurrence (0â€“100%) of R horizon
 		#BDRICM = Depth to bedrock (R horizon) up to 200 cm
 		#CARBON = Soil organic carbon content (fine earth fraction) in g per kg
 		#pH_H20 = Soil pH x 10 in H2O
@@ -176,7 +177,7 @@ if (file.exists(jar) != T) {
   download.file(url, dest = "maxent.zip", mode = "wb")
   unzip("maxent.zip", files = "maxent.jar", exdir = system.file("java", package = "dismo"))
   unlink("maxent.zip")
-  warning("Maxent foi colocado no diretório")
+  warning("Maxent foi colocado no diretÃ³rio")
 } 
 system.file("java", package = "dismo")
 
@@ -947,32 +948,17 @@ res(bio.crop) ##0.083 = aprox. 10km
 #PCA<-PCA(bio.crop.df)
 
 memory.limit(1000000)
-env.selected1 <- rasterPCA(bio.crop, nComp=13, spca = TRUE, bylayer=TRUE, filename="PCA.grd", overwrite=TRUE)
-
+env.selected1 <- rasterPCA(bio.crop, nComp=13,scores = TRUE, cor=TRUE, spca = TRUE, bylayer=TRUE, filename="PCA.grd", overwrite=TRUE)
 # Here I selected the first 13 components because they account for 90% 
 # of the total variance considering the 70 predictors of this routine for the 
 # entire Neotropical Region (10-km resolution).
-
+write.table(env.selected1$model$loadings, 'cont.csv', sep = ',')
 summary(env.selected1$model) #to verify the explanation of each PCA component
 env.selected <-stack(env.selected1$map)
 env.selected
 res(env.selected)
-plot(env.selected)
-names(env.selected) 
-
-
-#Alternative way to obtain PCA Axes:
-#install.packages("devtools")
-#require(devtools)
-#install_github("narayanibarve/ENMGadgets", dep = T)
-#require(ENMGadgets)
-#bio.crop <- list.files("./Environmental layers/ALL", pattern="grd", full.names=TRUE)
-#bio.crop
-#PCARaster(BioStackFiles = bio.crop, LoadingFile = "resultsPCA.csv", CompImpFile = "summariesPCA.csv",
-  # OPfolder = "./PCA")
-#env.selected1 <-list.files("./PCA", pattern="asc", full.names=TRUE)
-#env.selected <- stack(env.selected1)
 #plot(env.selected)
+names(env.selected) 
 
 
 #---------------------------------------#
@@ -996,6 +982,15 @@ spp<-read.table(file.choose(),header=T,sep=",")
 dim(spp)
 View(spp)
 
+#If you would like to obtain values of the 70 environmental predictors
+#for each of your occurrence records:
+spp1<-spp[,-1]
+View(spp1)
+ext<-extract(bio.crop,spp1)
+View(ext)
+write.table(ext,"Variables for each site.csv")
+
+
 # Visualizing species occurrence records on a map #
 data(wrld_simpl)
 plot(wrld_simpl, xlim=c(-85, -35), ylim=c(-55, 15), col="lightgray", axes=TRUE)
@@ -1008,11 +1003,10 @@ especies <- unique(spp$sp) #ditto
 especies
 
 # Creating objects for models calibration
-
-n.runs = 5 #number of RUNs
+n.runs = 10 #number of RUNs
 n.algo1 = 3 #number of algorithms
 n.algo2 = 6 #numero de algorithms
-n.conj.pa2 = 5 #set of pseudo-absences
+n.conj.pa2 = 10 #set of pseudo-absences
 
 especie = especies[1] # To model without a loop, remove the '#' from this line and add it to the 'for', 'foreach' and '.packages'
 # (ini = Sys.time())
@@ -1034,7 +1028,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           # nome = strsplit(as.vector(especie), " ")
           # especie = paste(nome[[1]][1], nome[[1]][2], sep = ".")
           
-          # Selecionado pontos espacialmente únicos #
+          # Selecionado pontos espacialmente Ãºnicos #
           mask <- env.selected[[1]]
           cell <-
             cellFromXY(mask, occs[, 1:2]) # get the cell number for each point
@@ -1049,7 +1043,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           
           # Convert dataset to SpatialPointsDataFrame (only presences)
           myRespXY <-
-            occs[, c("lon", "lat")] #Caso dê algum erro aqui, veja como você intitulou as colunas da sua matriz.
+            occs[, c("lon", "lat")] #Caso dÃª algum erro aqui, veja como vocÃª intitulou as colunas da sua matriz.
           # Creating occurrence data object
           occurrence.resp <-  rep(1, length(myRespXY$lon))
           
@@ -1085,7 +1079,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           })
           dim(occs)
           PA.number <- length(occs[, 1])
-          PA.number #número de pontos de ocorrência espacialmente únicos
+          PA.number #nÃºmero de pontos de ocorrÃªncia espacialmente Ãºnicos
           
           diretorio = paste0("Occurrence.", especie)
           
@@ -1097,13 +1091,13 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             resp.xy = myRespXY,
             resp.name = diretorio,
             PA.nb.rep = n.conj.pa2,
-            #número de datasets de pseudoausências
+            #nÃºmero de datasets de pseudoausÃªncias
             PA.nb.absences = PA.number,
-            #= número de pseudoausências = número de pontos espacialmente únicos
+            #= nÃºmero de pseudoausÃªncias = nÃºmero de pontos espacialmente Ãºnicos
             PA.strategy = "disk",
             PA.dist.min = dist.min * 1000,
-            PA.dist.max = dist.mean * 1000,
-            na.rm = TRUE
+            PA.dist.max = dist.mean * 1000
+            #na.rm = TRUE
           )
           sppBiomodData.PA.equal
           
@@ -1131,21 +1125,21 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           # Modeling ####
           #-------------#
           
-          # Com partição treino x teste:
+          # Com partiÃ§Ã£o treino x teste:
           sppModelOut.PA.equal <- BIOMOD_Modeling(
             sppBiomodData.PA.equal,
             models = c("GBM", "CTA", "RF"),
             models.options = NULL,
             NbRunEval = n.runs,
-            #número de repetições para cada algoritmo
+            #nÃºmero de repetiÃ§Ãµes para cada algoritmo
             DataSplit = 70,
             #percentagem de pts para treino.
             Prevalence = 0.5,
             VarImport = 0,
-            #caso queira avaliar a importância das variáveis, mudar para 10 ou 100 permutações
+            #caso queira avaliar a importÃ¢ncia das variÃ¡veis, mudar para 10 ou 100 permutaÃ§Ãµes
             models.eval.meth = c("TSS", "ROC"),
             SaveObj = TRUE,
-            rescal.all.models = TRUE,
+            rescal.all.models = F,
             do.full.models = FALSE,
             modeling.id = "spp_presente"
           )
@@ -1156,12 +1150,12 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             models = c("MAXENT.Phillips", "GLM", "GAM", "ANN", "FDA", "MARS"),
             models.options = myBiomodOption,
             NbRunEval = n.runs,
-            #número de repetições para cada algoritmo
+            #nÃºmero de repetiÃ§Ãµes para cada algoritmo
             DataSplit = 70,
             #percentagem de pts para treino.
-            Prevalence = NULL,
+            Prevalence = 0.5,
             VarImport = 0,
-            #caso queira avaliar a importância das variáveis, mudar para 10 ou 100 permutações
+            #caso queira avaliar a importÃ¢ncia das variÃ¡veis, mudar para 10 ou 100 permutaÃ§Ãµes
             models.eval.meth = c("TSS", "ROC"),
             SaveObj = TRUE,
             rescal.all.models = TRUE,
@@ -1174,7 +1168,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           # EVALUATE MODELS USING BIOMOD2 ##
           #-------------------------------#
           
-          # Sobre as métricas avaliativas,
+          # Sobre as mÃ©tricas avaliativas,
           # ver http://www.cawcr.gov.au/projects/verification/#Methods_for_dichotomous_forecasts
           
           
@@ -1197,7 +1191,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           )
           
           
-          # Sumarizando as métricas avaliativas
+          # Sumarizando as mÃ©tricas avaliativas
           sdm.models1 <- c("GBM", "CTA", "RF") #3 models
           sdm.models1
           eval.methods1 <- c("TSS", "ROC") #2 evaluation methods
@@ -1218,11 +1212,24 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
                        means.i1)
           names(summary.eval.equal) <- c("Model", "PA","Run", "TSS")
           summary.eval.equal
-          
           write.table(
             summary.eval.equal,
             paste0("./outputs/", especie, "_", "Models1_Evaluation.csv")
           )
+          
+          means.i1.1 <- numeric(0)
+          means.j1.1 <- numeric(2)
+          for (i in 1:n.algo1){
+            for (j in 1:2){
+              means.j1.1[j] <- mean(sppModelEval.PA.equal[paste(eval.methods1[j]),"Testing.data",paste(sdm.models1[i]),,])
+            }
+            means.i1.1 <- c(means.i1.1, means.j1.1)
+          }
+          
+          summary.eval.equal.mean <- data.frame(rep(sdm.models1,each=j), rep(eval.methods1,i), means.i1.1)
+          names(summary.eval.equal.mean) <- c("Model", "Method", "Mean")
+          summary.eval.equal.mean
+          write.table(summary.eval.equal.mean,"Models1_Evaluation_Mean.csv")
           
           sd.i1 <- numeric(0)
           sd.j1 <- numeric(2)
@@ -1270,6 +1277,21 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             paste0("./outputs/", especie, "_", "Models2_Evaluation.csv")
           )
           
+          means.i2.2 <- numeric(0)
+          means.j2.2 <- numeric(2)
+          for (i in 1:n.algo2){
+            for (j in 1:2){
+              means.j2.2[j] <- mean(sppModelEval.PA.10000[paste(eval.methods2[j]),"Testing.data",paste(sdm.models2[i]),,], na.rm = T)
+            }
+            means.i2.2 <- c(means.i2.2, means.j2.2)
+          }
+          
+          summary.eval.10000.mean <- data.frame(rep(sdm.models2,each=j), rep(eval.methods2,i), means.i2.2)
+          names(summary.eval.10000.mean) <- c("Model", "Method", "Mean")
+          summary.eval.10000.mean
+          write.table(summary.eval.10000.mean,"Models2_Evaluation_Mean.csv")
+          
+          
           sd.i2 <- numeric(0)
           sd.j2 <- numeric(2)
           for (i in 1:n.algo2) {
@@ -1314,7 +1336,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           
            save.image()
           
-		### Definir diretório onde está o arquivo proj_Cur1_presente_Occurrence.grd
+		### Definir diretÃ³rio onde estÃ¡ o arquivo proj_Cur1_presente_Occurrence.grd
           projections_1 <-
             stack(
               paste0(
@@ -1341,7 +1363,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           
           projections.1 = (subset(projections_1, sel[, "ID"]))
           proj.select1 <- names(projections.1)
-          ### Definir diretório onde está o arquivo proj_Cur2_presente_Occurrence.grd
+          ### Definir diretÃ³rio onde estÃ¡ o arquivo proj_Cur2_presente_Occurrence.grd
           projections_2 <-
             stack(
               paste0(
@@ -1525,19 +1547,16 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           (scores_equal <- get_evaluations(sppModelOut.PA.equal))
           scores_ROC_equal <-
             as.numeric(scores_equal["ROC", "Cutoff", , , ])
+          scores_ROC_equal[scores_ROC_equal=='-Inf']<-NA
           write.table(scores_ROC_equal, paste0("./outputs/",especie, "_", "scores_equal_.csv"))
-          #----------------------#
-          # Evaluate Mean Equal #
-          #--------------------#
-          scores_ROC_equal_eval <-
-            as.numeric(scores_equal["ROC", "Testing.data", , , ])
-          write.table(scores_ROC_equal_eval, paste0("./outputs/",especie, "_", "Evaluations_mean_equal_.csv"))
           
           try({ 
             ##Scores GBM
             scores_ROC_GBM <-
               as.numeric(scores_equal["ROC", "Cutoff", "GBM", , ])
-            scores_ROC_GBM <- na.exclude(scores_ROC_GBM)
+            scores_ROC_GBM[scores_ROC_GBM=="NA"]<--Inf
+            scores_ROC_GBM
+            scores_ROC_GBM <- as.numeric(na.exclude(scores_ROC_GBM))
             th_GBM <- mean(scores_ROC_GBM) / 10
             th_GBM
             write.table(th_GBM, paste0("./outputs/",especie, "_", "scores_ROC_GBM_.csv"))
@@ -1546,6 +1565,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             ##Scores CTA
             scores_ROC_CTA <-
               as.numeric(scores_equal["ROC", "Cutoff", "CTA", , ])
+            scores_ROC_CTA[scores_ROC_CTA=="-Inf"]<-NA
             scores_ROC_CTA <- na.exclude(scores_ROC_CTA)
             th_CTA <- mean(scores_ROC_CTA) / 10
             th_CTA
@@ -1556,6 +1576,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             scores_ROC_RF <-
               as.numeric(scores_equal["ROC", "Cutoff", "RF", , ])
             scores_ROC_RF <- na.exclude(scores_ROC_RF)
+            scores_ROC_RF[scores_ROC_RF=="-Inf"]<-NA
             th_RF <- mean(scores_ROC_RF) / 10
             th_RF
             write.table(th_RF, paste0("./outputs/",especie, "_", "scores_ROC_RF_.csv"))
@@ -1565,18 +1586,15 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           (scores_10000 <- get_evaluations(sppModelOut.PA.10000))
           scores_ROC_10000 <-
             as.numeric(scores_10000["ROC", "Cutoff", , , ])
+          scores_ROC_10000[scores_ROC_10000=='-Inf']<-NA
           write.table(scores_ROC_10000, paste0("./outputs/",especie, "_", "scores_10000_.csv"))
-          #----------------------#
-          # Evaluate Mean 10000 #
-          #--------------------#
-          scores_ROC_10000_eval <-
-            as.numeric(scores_10000["TSS", "Testing.data", , , ])
-          write.table(scores_ROC_10000_eval, paste0("./outputs/",especie, "_", "Evaluations_mean_10000_TSS_.csv"))
+
           
           try({ 
             ##Scores GLM
             scores_ROC_GLM <-
               as.numeric(scores_10000["ROC", "Cutoff", "GLM", , ])
+            scores_ROC_GLM[scores_ROC_GLM=="-Inf"]<-NA
             scores_ROC_GLM <- na.exclude(scores_ROC_GLM)
             th_GLM <- mean(scores_ROC_GLM) / 10
             th_GLM
@@ -1586,6 +1604,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             ##Scores GAM
             scores_ROC_GAM <-
               as.numeric(scores_10000["ROC", "Cutoff", "GAM", , ])
+            scores_ROC_GAM[scores_ROC_GAM=="-Inf"]<-NA
             scores_ROC_GAM <- na.exclude(scores_ROC_GAM)
             th_GAM <- mean(scores_ROC_GAM) / 10
             th_GAM
@@ -1595,6 +1614,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             ##Scores ANN
             scores_ROC_ANN <-
               as.numeric(scores_10000["ROC", "Cutoff", "ANN", , ])
+            scores_ROC_ANN[scores_ROC_ANN=="-Inf"]<-NA
             scores_ROC_ANN <- na.exclude(scores_ROC_ANN)
             th_ANN <- mean(scores_ROC_ANN) / 10
             th_ANN
@@ -1603,6 +1623,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           # ##Scores SRE
           # scores_ROC_SRE <-
           #   as.numeric(scores_10000["ROC", "Cutoff", "SRE", , ])
+          # scores_ROC_SRE[scores_ROC_SRE=="-Inf"]<-NA
           # scores_ROC_SRE <- na.exclude(scores_ROC_SRE)
           # th_SRE <- mean(scores_ROC_SRE) / 10
           # th_SRE
@@ -1611,6 +1632,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             ##Scores FDA
             scores_ROC_FDA <-
               as.numeric(scores_10000["ROC", "Cutoff", "FDA", , ])
+            scores_ROC_FDA[scores_ROC_FDA=="-Inf"]<-NA
             scores_ROC_FDA <- na.exclude(scores_ROC_FDA)
             th_FDA <- mean(scores_ROC_FDA) / 10
             th_FDA
@@ -1620,6 +1642,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             ##Scores MARS
             scores_ROC_MARS <-
               as.numeric(scores_10000["ROC", "Cutoff", "MARS", , ])
+            scores_ROC_MARS[scores_ROC_MARS=="-Inf"]<-NA
             scores_ROC_MARS <- na.exclude(scores_ROC_MARS)
             th_MARS <- mean(scores_ROC_MARS) / 10
             th_MARS
@@ -1629,6 +1652,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             ##Scores MAXENT.Phillips
             scores_ROC_MAXENT.Phillips <-
               as.numeric(scores_10000["ROC", "Cutoff", "MAXENT.Phillips", , ])
+            scores_ROC_MAXENT.Phillips[scores_ROC_MAXENT.Phillips=="-Inf"]<-NA
             scores_ROC_MAXENT.Phillips <-
               na.exclude(scores_ROC_MAXENT.Phillips)
             th_MAXENT.Phillips <-
@@ -1637,7 +1661,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             write.table(th_MAXENT.Phillips, paste0("./outputs/",especie, "_", "scores_ROC_MAXENT.Phillips_.csv"))
           })
           #Scores mean
-          th_mean<-mean(c(scores_ROC_10000,scores_ROC_equal), na.rm=T)/10
+          (th_mean<-mean(c(scores_ROC_10000,scores_ROC_equal), na.rm=T)/10)
           write.table(th_mean, paste0("./outputs/",especie, "_", "scores_ROC_mean.csv"))
           
           #-------------------------------------------------------#
@@ -1768,13 +1792,15 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
             overwrite = TRUE
           )
 
-	plot(projections.binary.all, col = matlab.like(100), main = "Binary", las = 1)
+	#plot(projections.binary.all, col = matlab.like(100), main = "Binary", las = 1)
        
 
           #--------------------#          
           # Move the files ####
           #------------------#          
           
+	#install.packages("filesstrings")
+	library(filesstrings)
           results<-list.files(
             "./outputs/",paste0(especie, "_"),
             full.names = TRUE
@@ -1794,3 +1820,4 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           sink()
           
         }
+#END.
