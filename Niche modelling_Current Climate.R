@@ -5,16 +5,15 @@
 #                SUMMARIZED IN PCA AXES            #######
 #-------------------------------------------------------#
 
-#Released on: October 18th, 2018
+# Released on: October 18th, 2018
 
 
 # Contact: Pedro V. Eisenlohr (pedro.eisenlohr@unemat.br)
 
 
 #------------------------------------------------- Acknowledgments ------------------------------------------------------------####
-### Dr. Guarino Colli's team of Universidade de BrasÃ­lia. #########################################################################
+### Dr. Guarino Colli's team of Universidade de Brasilia. #########################################################################
 ### Dr. Diogo Souza Bezerra Rocha (Instituto de Pesquisas Jardim BotÃ¢nico/RJ). ####################################################
-### DrÂª Marinez Ferreira de Siqueira (Instituto de Pesquisas Jardim BotÃ¢nico/RJ). #################################################
 ### My students of Ecology Lab, mainly J.C. Pires-de-Oliveira. ####################################################################
 #----------------------------------------- ---------------------------------------------------------------------------------------#
 
