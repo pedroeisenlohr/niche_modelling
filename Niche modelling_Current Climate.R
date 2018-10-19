@@ -5,7 +5,7 @@
 #                SUMMARIZED IN PCA AXES            #######
 #-------------------------------------------------------#
 
-# Released on: October 18th, 2018
+# Released on: October 19th, 2018
 
 
 # Contact: Pedro V. Eisenlohr (pedro.eisenlohr@unemat.br)
@@ -1029,12 +1029,17 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           
           # Selecionado pontos espacialmente Ãºnicos #
           mask <- env.selected[[1]]
-          cell <-
-            cellFromXY(mask, occs[, 1:2]) # get the cell number for each point
-          dup <- duplicated(cbind(occs[, 1:2], cell))
-          occs <-
-            occs[!dup, ]# select the records that are not duplicated
-          dim(occs)
+            {(cell <-
+      cellFromXY(mask, occs[, 1:2])) # get the cell number for each point
+    (x<-(cbind(occs[, 1:2], cell)))
+    #dup <- duplicated(cbind(occs[, 1:2], cell))
+    (dup2 <- duplicated(cbind(cell)))
+    xv<-data.frame(x,dup2)
+    xv[xv=="TRUE"]<-NA
+    (xv<-na.omit(xv))
+    xv<-xv[,1:2]
+    occs =xv# select the records that are not duplicated
+    }
           
           #-----------------------------------------------#
           # GENERATING OTHER REQUIRED OBJECTS FOR SDM ####
