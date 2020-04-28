@@ -5,15 +5,15 @@
 #                SUMMARIZED IN PCA AXES            #######
 #-------------------------------------------------------#
 
-# Released on: October 19th, 2018
 
 
 # Contact: Pedro V. Eisenlohr (pedro.eisenlohr@unemat.br)
 
 
 #------------------------------------------------- Acknowledgments ------------------------------------------------------------####
-### Dr. Guarino Colli's team of Universidade de Brasilia. #########################################################################
+### Dr. Guarino Colli's team of Universidade de BrasÃ­lia. #########################################################################
 ### Dr. Diogo Souza Bezerra Rocha (Instituto de Pesquisas Jardim BotÃ¢nico/RJ). ####################################################
+### DrÂª Marinez Ferreira de Siqueira (Instituto de Pesquisas Jardim BotÃ¢nico/RJ). #################################################
 ### My students of Ecology Lab, mainly J.C. Pires-de-Oliveira. ####################################################################
 #----------------------------------------- ---------------------------------------------------------------------------------------#
 
@@ -131,7 +131,7 @@ list.files() # Among the listed files, there must be one called
 #install.packages("plotKML", dep=T)
 #install.packages("raster", dep=T)
 #install.packages("rgdal", dep=T)
-install.packages("RStoolbox", dep=T)
+#install.packages("RStoolbox", dep=T)
 #install.packages("foreach", dep=T)
 #install.packages("doParallel", dep=T)
 
@@ -148,9 +148,8 @@ library(rgdal)
 library(RStoolbox)
 library(foreach)
 library(doParallel)
-
-
-
+library(virtualspecies)
+library(filesstrings)
 
 # Creating output folder #
 
@@ -167,21 +166,6 @@ if (dir.exists("outputs") == F) {
 #registerDoParallel(cl)
 #getDoParWorkers()
 
-
-
-# MaxEnt .jar
-jar <- paste0(system.file(package = "dismo"), "/java/maxent.jar")
-if (file.exists(jar) != T) {
-  url = "http://biodiversityinformatics.amnh.org/open_source/maxent/maxent.php?op=download"
-  download.file(url, dest = "maxent.zip", mode = "wb")
-  unzip("maxent.zip", files = "maxent.jar", exdir = system.file("java", package = "dismo"))
-  unlink("maxent.zip")
-  warning("Maxent foi colocado no diretÃ³rio")
-} 
-system.file("java", package = "dismo")
-
-# Path to MAXENT:
-myBiomodOption <- BIOMOD_ModelingOptions(MAXENT.Phillips = list(path_to_maxent.jar=paste0(system.file(package = "dismo"), "/java/maxent.jar")))
 
 
 #--------------------------------------------------------------------------------------------#
@@ -948,15 +932,16 @@ res(bio.crop) ##0.083 = aprox. 10km
 
 memory.limit(1000000)
 env.selected1 <- rasterPCA(bio.crop, nComp=13,scores = TRUE, cor=TRUE, spca = TRUE, bylayer=TRUE, filename="PCA.grd", overwrite=TRUE)
-# Here I selected the first 13 components because they account for 90% 
+# Here I selected the first 13 components because they account for more than 90% 
 # of the total variance considering the 70 predictors of this routine for the 
 # entire Neotropical Region (10-km resolution).
-write.table(env.selected1$model$loadings, 'cont.csv', sep = ',')
+#env.selected1$model$loadings
+#write.table(env.selected1$model$loadings, 'cont.csv', sep = ',')
 summary(env.selected1$model) #to verify the explanation of each PCA component
 env.selected <-stack(env.selected1$map)
 env.selected
 res(env.selected)
-#plot(env.selected)
+plot(env.selected)
 names(env.selected) 
 
 
@@ -986,6 +971,7 @@ View(spp)
 spp1<-spp[,-1]
 View(spp1)
 ext<-extract(bio.crop,spp1)
+ext<-cbind(spp,ext)
 View(ext)
 write.table(ext,"Variables for each site.csv")
 
@@ -1002,809 +988,597 @@ especies <- unique(spp$sp) #ditto
 especies
 
 # Creating objects for models calibration
-n.runs = 10 #number of RUNs
-n.algo1 = 3 #number of algorithms
-n.algo2 = 6 #numero de algorithms
-n.conj.pa2 = 10 #set of pseudo-absences
-
-especie = especies[1] # To model without a loop, remove the '#' from this line and add it to the 'for', 'foreach' and '.packages'
-# (ini = Sys.time())
-
+models1<-c("CTA","RF", "GBM")
+models2<-c("MAXENT.Phillips", "GLM", "GAM", "MARS","ANN", "FDA")
+n.runs = 2 # number of RUNs (use at least 10)
+n.algo1 = length(models1)# number of algorithms
+n.algo2 = length(models2) #numero de algorithms
+n.conj.pa2 = 2 # set of pseudo-absences (use at least 10)
+env.selected = bio.crop
+especie = especies[1] # To model without a loop, remove the '#' of this line and add it to the 'for', 'foreach' and '.packages'
 #-------------------------#
 #beginning of the loop####
 #-----------------------#
-
-# for(especie in especies[1]) { # For sequential loop (One species)
+# for(especie in especies[1:length(especies)]){
 # foreach(especie = especies, # For parallel looping (Multiple Species)
-#         .packages = c("raster", "biomod2", 'sp', "sdmvspecies", "filesstrings")) %dopar% {
-#           ini1 = Sys.time()
-          # criando tabela para uma especie
-          occs <- spp[spp$sp == especie, c("lon", "lat")]
-          write.table(
-            occs,
-            paste0("./outputs/", especie, "_", "occs.csv")
-          )
-          # nome = strsplit(as.vector(especie), " ")
-          # especie = paste(nome[[1]][1], nome[[1]][2], sep = ".")
-          
-          # Selecionado pontos espacialmente Ãºnicos #
-          mask <- env.selected[[1]]
-            {(cell <-
-      cellFromXY(mask, occs[, 1:2])) # get the cell number for each point
-    (x<-(cbind(occs[, 1:2], cell)))
-    #dup <- duplicated(cbind(occs[, 1:2], cell))
-    (dup2 <- duplicated(cbind(cell)))
-    xv<-data.frame(x,dup2)
-    xv[xv=="TRUE"]<-NA
-    (xv<-na.omit(xv))
-    xv<-xv[,1:2]
-    occs =xv# select the records that are not duplicated
-    }
-          
-          #-----------------------------------------------#
-          # GENERATING OTHER REQUIRED OBJECTS FOR SDM ####
-          #---------------------------------------------#
-          
-          # Convert dataset to SpatialPointsDataFrame (only presences)
-          myRespXY <-
-            occs[, c("lon", "lat")] #Caso dÃª algum erro aqui, veja como vocÃª intitulou as colunas da sua matriz.
-          # Creating occurrence data object
-          occurrence.resp <-  rep(1, length(myRespXY$lon))
-          
-          
-          #------------------------------------------#
-          # FIT SPECIES DISTRIBUTION MODELS - SDMS ####
-          #----------------------------------------#
-          
-          try({    
-            coord1 = occs
-            sp::coordinates(coord1) <- ~ lon + lat
-            raster::crs(coord1) <- raster::crs(env.selected)
-            
-            dist.mean <- mean(sp::spDists(
-              x = coord1,
-              longlat = T,
-              segments = FALSE
-            ))
-            dist.min = 5
-            dist.min <-  min(sp::spDists(x = coord1,
-                                         longlat = T,
-                                         segments = F))
-            dist.min = 5
-            
-            write.table(
-              c(dist.min, dist.mean),
-              paste0(
-                './outputs/',
-                especie,"_", ".csv"),
-              row.names = F,
-              sep = ";"
-            )
-          })
-          dim(occs)
-          PA.number <- length(occs[, 1])
-          PA.number #nÃºmero de pontos de ocorrÃªncia espacialmente Ãºnicos
-          
-          diretorio = paste0("Occurrence.", especie)
-          
-          
-          # Preparando para CTA, GBM e RF:
-          sppBiomodData.PA.equal <- BIOMOD_FormatingData(
-            resp.var = occurrence.resp,
-            expl.var = env.selected,
-            resp.xy = myRespXY,
-            resp.name = diretorio,
-            PA.nb.rep = n.conj.pa2,
-            #nÃºmero de datasets de pseudoausÃªncias
-            PA.nb.absences = PA.number,
-            #= nÃºmero de pseudoausÃªncias = nÃºmero de pontos espacialmente Ãºnicos
-            PA.strategy = "disk",
-            PA.dist.min = dist.min * 1000,
-            PA.dist.max = dist.mean * 1000
-            #na.rm = TRUE
-          )
-          sppBiomodData.PA.equal
-          
-          
-          #Preparando para os demais algoritmos:
-          sppBiomodData.PA.10000 <- BIOMOD_FormatingData(
-            resp.var = occurrence.resp,
-            expl.var = env.selected,
-            resp.xy = myRespXY,
-            resp.name = diretorio,
-            PA.nb.rep = n.conj.pa2,
-            PA.nb.absences = 1000,
-            PA.strategy = "disk",
-            PA.dist.min = dist.min * 1000,
-            PA.dist.max = dist.mean * 1000,
-            na.rm = TRUE
-          )
-          sppBiomodData.PA.10000
-          
-          myBiomodOption <-
-            BIOMOD_ModelingOptions(MAXENT.Phillips = list(path_to_maxent.jar = jar))
-          
-          
-          #---------------#
-          # Modeling ####
-          #-------------#
-          
-          # Com partiÃ§Ã£o treino x teste:
-          sppModelOut.PA.equal <- BIOMOD_Modeling(
-            sppBiomodData.PA.equal,
-            models = c("GBM", "CTA", "RF"),
-            models.options = NULL,
-            NbRunEval = n.runs,
-            #nÃºmero de repetiÃ§Ãµes para cada algoritmo
-            DataSplit = 70,
-            #percentagem de pts para treino.
-            Prevalence = 0.5,
-            VarImport = 0,
-            #caso queira avaliar a importÃ¢ncia das variÃ¡veis, mudar para 10 ou 100 permutaÃ§Ãµes
-            models.eval.meth = c("TSS", "ROC"),
-            SaveObj = TRUE,
-            rescal.all.models = F,
-            do.full.models = FALSE,
-            modeling.id = "spp_presente"
-          )
-          sppModelOut.PA.equal
-          
-          sppModelOut.PA.10000 <- BIOMOD_Modeling(
-            sppBiomodData.PA.10000,
-            models = c("MAXENT.Phillips", "GLM", "GAM", "ANN", "FDA", "MARS"),
-            models.options = myBiomodOption,
-            NbRunEval = n.runs,
-            #nÃºmero de repetiÃ§Ãµes para cada algoritmo
-            DataSplit = 70,
-            #percentagem de pts para treino.
-            Prevalence = 0.5,
-            VarImport = 0,
-            #caso queira avaliar a importÃ¢ncia das variÃ¡veis, mudar para 10 ou 100 permutaÃ§Ãµes
-            models.eval.meth = c("TSS", "ROC"),
-            SaveObj = TRUE,
-            rescal.all.models = TRUE,
-            do.full.models = FALSE,
-            modeling.id = "spp_presente"
-          )
-          sppModelOut.PA.10000
-          
-          #---------------------------------#
-          # EVALUATE MODELS USING BIOMOD2 ##
-          #-------------------------------#
-          
-          # Sobre as mÃ©tricas avaliativas,
-          # ver http://www.cawcr.gov.au/projects/verification/#Methods_for_dichotomous_forecasts
-          
-          
-          ##### Evaluation of Models ####
-          sppModelEval.PA.equal <-
-            get_evaluations(sppModelOut.PA.equal)#GBM, CTA e RF
-          sppModelEval.PA.equal
-          write.table(
-            sppModelEval.PA.equal,
-            paste0("./outputs/", especie, "_", "EvaluationsAll_1.csv")
-          )
-          
-          
-          sppModelEval.PA.10000 <-
-            get_evaluations(sppModelOut.PA.10000) #Os demais.
-          sppModelEval.PA.10000
-          write.table(
-            sppModelEval.PA.10000,
-            paste0("./outputs/", especie, "_", "EvaluationsAll_2.csv")
-          )
-          
-          
-          # Sumarizando as mÃ©tricas avaliativas
-          sdm.models1 <- c("GBM", "CTA", "RF") #3 models
-          sdm.models1
-          eval.methods1 <- c("TSS", "ROC") #2 evaluation methods
-          eval.methods1
-          
-          
-          means.i1 <- numeric(0)
-          for (i in 1:n.algo1) {
-            m1 <-
-              sppModelEval.PA.equal[paste(eval.methods1[1]), "Testing.data", paste(sdm.models1[i]), ,]
-            means.i1 = c(means.i1, m1) 
-          }
-          
-          summary.eval.equal <-
-            data.frame(rep(sdm.models1, each =  n.runs*n.conj.pa2),
-                       rep(1:n.conj.pa2, each = n.runs),
-                       rep(1:n.runs, n.algo1),
-                       means.i1)
-          names(summary.eval.equal) <- c("Model", "PA","Run", "TSS")
-          summary.eval.equal
-          write.table(
-            summary.eval.equal,
-            paste0("./outputs/", especie, "_", "Models1_Evaluation.csv")
-          )
-          
-          means.i1.1 <- numeric(0)
-          means.j1.1 <- numeric(2)
-          for (i in 1:n.algo1){
-            for (j in 1:2){
-              means.j1.1[j] <- mean(sppModelEval.PA.equal[paste(eval.methods1[j]),"Testing.data",paste(sdm.models1[i]),,])
-            }
-            means.i1.1 <- c(means.i1.1, means.j1.1)
-          }
-          
-          summary.eval.equal.mean <- data.frame(rep(sdm.models1,each=j), rep(eval.methods1,i), means.i1.1)
-          names(summary.eval.equal.mean) <- c("Model", "Method", "Mean")
-          summary.eval.equal.mean
-          write.table(summary.eval.equal.mean,"Models1_Evaluation_Mean.csv")
-          
-          sd.i1 <- numeric(0)
-          sd.j1 <- numeric(2)
-          for (i in 1:n.algo1) {
-            for (j in 1:2) {
-              sd.j1[j] <-
-                sd(sppModelEval.PA.equal[paste(eval.methods1[j]), "Testing.data", paste(sdm.models1[i]), ,])
-            }
-            sd.i1 <- c(sd.i1, sd.j1)
-          }
-          
-          summary.eval.equal.sd <-
-            data.frame(rep(sdm.models1, each = 2), rep(eval.methods1, n.algo1), sd.i1)
-          names(summary.eval.equal.sd) <- c("Model", "Method", "SD")
-          summary.eval.equal.sd
-          write.table(
-            summary.eval.equal.sd,
-            paste0("./outputs/", especie, "_", "Models1_Evaluation_SD.csv")
-          )
-          
-          
-          sdm.models2 <-
-            c("MAXENT.Phillips", "GLM", "GAM", "ANN", "FDA", "MARS") #7 models
-          sdm.models2
-          eval.methods2 <- c("TSS", "ROC") #2 evaluation methods
-          eval.methods2
-          
-          
-          means.i2 <- numeric(0)
-          for (i2 in 1:n.algo2) {
-            m2 <-
-              sppModelEval.PA.10000[paste(eval.methods2[1]), "Testing.data", paste(sdm.models2[i2]), ,]
-            means.i2 = c(means.i2, m2)
-          }
-          
-          summary.eval.10000 <-
-            data.frame(rep(sdm.models2, each =  n.runs*n.conj.pa2),
-                       rep(1:n.conj.pa2, each = n.runs),
-                       rep(1:n.runs, n.algo2),
-                       means.i2)
-          names(summary.eval.10000) <- c("Model", "PA","Run", "TSS")
-          summary.eval.10000
-          write.table(
-            summary.eval.10000,
-            paste0("./outputs/", especie, "_", "Models2_Evaluation.csv")
-          )
-          
-          means.i2.2 <- numeric(0)
-          means.j2.2 <- numeric(2)
-          for (i in 1:n.algo2){
-            for (j in 1:2){
-              means.j2.2[j] <- mean(sppModelEval.PA.10000[paste(eval.methods2[j]),"Testing.data",paste(sdm.models2[i]),,], na.rm = T)
-            }
-            means.i2.2 <- c(means.i2.2, means.j2.2)
-          }
-          
-          summary.eval.10000.mean <- data.frame(rep(sdm.models2,each=j), rep(eval.methods2,i), means.i2.2)
-          names(summary.eval.10000.mean) <- c("Model", "Method", "Mean")
-          summary.eval.10000.mean
-          write.table(summary.eval.10000.mean,"Models2_Evaluation_Mean.csv")
-          
-          
-          sd.i2 <- numeric(0)
-          sd.j2 <- numeric(2)
-          for (i in 1:n.algo2) {
-            for (j in 1:2) {
-              sd.j2[j] <-
-                sd(sppModelEval.PA.10000[paste(eval.methods2[j]), "Testing.data", paste(sdm.models2[i]), ,])
-            }
-            sd.i2 <- c(sd.i2, sd.j2)
-          }
-          
-          summary.eval.10000.sd <-
-            data.frame(rep(sdm.models2, each = 2), rep(eval.methods2, n.algo2), sd.i2)
-          names(summary.eval.10000.sd) <- c("Model", "Method", "SD")
-          summary.eval.10000.sd
-          write.table(
-            summary.eval.10000.sd,
-            paste0("./outputs/", especie, "_", "Models2_Evaluation_SD.csv")
-          )
-          
-          
-          #-----------------------------#
-          # BUILDING OF PROJECTIONS ####
-          #---------------------------#
-          
-          spp.projections_1 <- BIOMOD_Projection(
-            modeling.output = sppModelOut.PA.equal,
-            new.env = env.selected,
-            proj.name = "Cur1_presente",
-            selected.models = "all",
-            #binary.meth = "ROC",
-            output.format = ".grd"
-          )
-          
-          spp.projections_2 <- BIOMOD_Projection(
-            modeling.output = sppModelOut.PA.10000,
-            new.env = env.selected,
-            proj.name = "Cur2_presente",
-            selected.models = "all",
-            #binary.meth = "ROC",
-            output.format = ".grd"
-          )
-          
-           save.image()
-          
-		### Definir diretÃ³rio onde estÃ¡ o arquivo proj_Cur1_presente_Occurrence.grd
-          projections_1 <-
-            stack(
-              paste0(
-                "./",
-                diretorio,
-                "/proj_Cur1_presente/proj_Cur1_presente_Occurrence.",
-                especie,
-                ".grd"
-              )
-            )
-          names(projections_1)
-          # x1<-length(names(projections_1))
-          x1<-length(na.omit(summary.eval.equal$Model))
-          summary.eval.equal <-na.omit(summary.eval.equal)
-          summary.eval.equal = summary.eval.equal[order(summary.eval.equal$PA),]
-          summary.eval.equal = summary.eval.equal[order(summary.eval.equal$Run),]
-          summary.eval.equal$ID = 1:x1
-          
-          
-          summary.eval.equal$ID = 1:x1
-          
-          sel = summary.eval.equal[summary.eval.equal[, "TSS"] > 0.400,]
-          sel <- na.omit(sel)
-          
-          projections.1 = (subset(projections_1, sel[, "ID"]))
-          proj.select1 <- names(projections.1)
-          ### Definir diretÃ³rio onde estÃ¡ o arquivo proj_Cur2_presente_Occurrence.grd
-          projections_2 <-
-            stack(
-              paste0(
-                "./",
-                diretorio,
-                "/proj_Cur2_presente/proj_Cur2_presente_Occurrence.",
-                especie,
-                ".grd"
-              )
-            )
-          names(projections_2)
-          # x2<-length(names(projections_2))
-          x2<-length(na.omit(summary.eval.10000$Model))
-          summary.eval.10000 <-na.omit(summary.eval.10000)
-          summary.eval.10000 = summary.eval.10000[order(summary.eval.10000$PA),]
-          summary.eval.10000 = summary.eval.10000[order(summary.eval.10000$Run),]
-          summary.eval.10000$ID = 1:x2
-          
-          sel2 = summary.eval.10000[summary.eval.10000[, "TSS"] >= 0.400,]
-          sel2 <- na.omit(sel2)
-          
-          projections.2 = (subset(projections_2, sel2[, "ID"]))
-          proj.select2 <- names(projections.2)
-          #-----------------------------------------------#
-          # Mean of the models by algorithm (Present) ####
-          #---------------------------------------------#
-          try({
-            projections.all1 <- stack(projections.1)#, projections_2)
-            
-            projections.RF.all <-
-              subset(projections.all1, grep("RF", names(projections.all1)))
-            projections.RF.mean <-
-              mean(projections.RF.all) / 10
-            writeRaster(
-              projections.RF.mean,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_RF.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({
-            projections.GBM.all <-
-              subset(projections.all1, grep("GBM", names(projections.all1)))
-            projections.GBM.mean <-
-              mean(projections.GBM.all) / 10
-            writeRaster(
-              projections.GBM.mean,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_GBM.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({
-            projections.CTA.all <-
-              subset(projections.all1, grep("CTA", names(projections.all1)))
-            projections.CTA.mean <-
-              mean(projections.CTA.all) / 10
-            writeRaster(
-              projections.CTA.mean,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_CTA.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          
-          try({    
-            projections.all2 <- stack(projections.2)
-            projections.GLM.all <-
-              subset(projections.all2, grep("GLM", names(projections.all2)))
-            projections.GLM.mean <-
-              mean(projections.GLM.all) / 10
-            writeRaster(
-              projections.GLM.mean,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_GLM.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.GAM.all <-
-              subset(projections.all2, grep("GAM", names(projections.all2)))
-            projections.GAM.mean <-
-              mean(projections.GAM.all) / 10
-            writeRaster(
-              projections.GAM.mean,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_GAM.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.ANN.all <-
-              subset(projections.all2, grep("ANN", names(projections.all2)))
-            projections.ANN.mean <-
-              mean(projections.ANN.all) / 10
-            writeRaster(
-              projections.ANN.mean,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_ANN.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          # try({ 
-          # projections.SRE.all <-
-          #   subset(projections.all2, grep("SRE", names(projections.all2)))
-          # projections.SRE.mean <-
-          #   mean(projections.SRE.all) / 10
-          # writeRaster(
-          #   projections.SRE.mean,
-          #   filename = paste0("./outputs/", especie, "_", "Current Climate_SRE.tif"),
-          #   formato = "GTiff",
-          #   overwrite = TRUE
-          # )
-          # })
-          try({ 
-            projections.MARS.all <-
-              subset(projections.all2, grep("MARS", names(projections.all2)))
-            projections.MARS.mean <-
-              mean(projections.MARS.all) / 10
-            writeRaster(
-              projections.MARS.mean,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_MARS.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.FDA.all <-
-              subset(projections.all2, grep("FDA", names(projections.all2)))
-            projections.FDA.mean <-
-              mean(projections.FDA.all) / 10
-            writeRaster(
-              projections.FDA.mean,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_FDA.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.MAXENT.Phillips.all <-
-              subset(projections.all2, grep("MAXENT.Phillips", names(projections.all2)))
-            projections.MAXENT.Phillips.mean <-
-              mean(projections.MAXENT.Phillips.all) / 10
-            writeRaster(
-              projections.MAXENT.Phillips.mean,
-              filename = paste0(
-                "./outputs/",
-                especie,
-                "_",
-                "Current Climate_MAXENT.Phillips.tif"
-              ),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          
-          #--------------------------------#
-          # Ensemble - Current Climate ####
-          #------------------------------#
-          # try({
-          projections.all.mean <-
-            mean(projections.1, projections.2) / 10# / dim(stack(projections_1, projections_2))[3]
-          
-	#plot(projections.all.mean, col = matlab.like(100), main = "Continuous", las = 1)
+# .packages = c("raster", "biomod2", 'sp', "sdmvspecies", "filesstrings")) %dopar% {
+# ini1 = Sys.time()
+# criando tabela para uma especie
+occs <- spp[spp$sp == especie, c("lon", "lat")]
+
+# nome = strsplit(as.vector(especie), " ")
+# especie = paste(nome[[1]][1], nome[[1]][2], sep = ".")
+
+# Selecionado pontos espacialmente Ãºnicos #
+mask <- env.selected[[1]]
+{(cell <-
+    cellFromXY(mask, occs[, 1:2])) # get the cell number for each point
+  (x<-(cbind(occs[, 1:2], cell)))
+  #dup <- duplicated(cbind(occs[, 1:2], cell))
+  (dup2 <- duplicated(cbind(cell)))
+  xv<-data.frame(x,dup2)
+  xv[xv=="TRUE"]<-NA
+  (xv<-na.omit(xv))
+  xv<-xv[,1:2]
+  occs =xv # select the records that are not duplicated
+}
+occs #pontos espacialmente únicos
+dim(occs)
+
+#-----------------------------------------------#
+# GENERATING OTHER REQUIRED OBJECTS FOR SDM ####
+#---------------------------------------------#
+
+# Convert dataset to SpatialPointsDataFrame (only presences)
+myRespXY <-
+  occs[, c("lon", "lat")] #Caso dÃª algum erro aqui, veja como vocÃª intitulou as colunas da sua matriz.
+# Creating occurrence data object
+occurrence.resp <-  rep(1, length(myRespXY$lon))
+
+
+#------------------------------------------#
+# FIT SPECIES DISTRIBUTION MODELS - SDMS ####
+#----------------------------------------#
+
+try({    
+  coord1 = occs
+  sp::coordinates(coord1) <- ~ lon + lat
+  raster::crs(coord1) <- raster::crs(env.selected)
+  
+  dist.mean <- mean(sp::spDists(
+    x = coord1,
+    longlat = T,
+    segments = FALSE
+  ))
+  dist.min = 5
+  dist.min <-  min(sp::spDists(x = coord1,
+                               longlat = T,
+                               segments = F))
+  dist.min = 5
+  
+  write.table(
+    c(dist.min, dist.mean),
+    paste0('./outputs/', especie,"_", ".csv"),
+    row.names = F,
+    sep = ","
+  )
+})
+dim(occs)
+PA.number <- length(occs[, 1])
+PA.number #nÃºmero de pontos de ocorrÃªncia espacialmente Ãºnicos
+
+diretorio = paste0("Occurrence.", especie)
+
+##### FORMATING DATA #####
+
+# Preparando para CTA, GBM e RF:
+sppBiomodData.PA.equal <- BIOMOD_FormatingData(
+  resp.var = occurrence.resp,
+  expl.var = env.selected,
+  resp.xy = myRespXY,
+  resp.name = diretorio,
+  PA.nb.rep = n.conj.pa2, #numero de datasets de pseudoausencias
+  PA.nb.absences = PA.number, #= numero de pseudoausencias = numero de pontos espacialmente unicos
+  PA.strategy = "disk",
+  # PA.sre.quant = 0.10,
+  PA.dist.min = dist.min * 1000,
+  PA.dist.max = dist.mean * 1000,
+  na.rm = TRUE
+)
+sppBiomodData.PA.equal
+
+#Preparando para os demais algoritmos:
+sppBiomodData.PA.10000 <- BIOMOD_FormatingData(
+  resp.var = occurrence.resp,
+  expl.var = env.selected,
+  resp.xy = myRespXY,
+  resp.name = diretorio,
+  PA.nb.rep = n.conj.pa2,
+  PA.nb.absences = 1000,
+  PA.strategy = "disk",
+  # PA.sre.quant = 0.10,
+  PA.dist.min = dist.min * 1000,
+  PA.dist.max = dist.mean * 1000,
+  na.rm = TRUE
+)
+sppBiomodData.PA.10000
+
+
+#Alocar o Maxent no diretorio correto (certifique-se que o java esteja instalado e atualizado)
+#MaxEnt .jar
+jar <- paste0(system.file(package = "dismo"), "/java/maxent.jar")
+if (file.exists(jar) != T) {
+  url = "http://biodiversityinformatics.amnh.org/open_source/maxent/maxent.php?op=download"
+  download.file(url, dest = "maxent.zip", mode = "wb")
+  unzip("maxent.zip",
+        files = "maxent.jar",
+        exdir = system.file("java", package = "dismo"))
+  unlink("maxent.zip")
+  warning("Maxent foi colocado no diret?rio")
+}
+system.file("java", package = "dismo")
+
+myBiomodOption <-
+  BIOMOD_ModelingOptions(MAXENT.Phillips = list(path_to_maxent.jar = jar))
 
 
 
-          writeRaster(
-            projections.all.mean,
-            filename = paste0("./outputs/", especie, "_", "Ensemble - Current Climate.tif"),
-            format = "GTiff",
-            overwrite = TRUE
-          )
-          # })
-          
-          
+# save.image()
+#---------------#
+# Modeling ####
+#-------------#
+
+# Com partiÃ§Ã£o treino x teste:
+sppModelOut.PA.equal <- BIOMOD_Modeling(
+  sppBiomodData.PA.equal,
+  models =models1,
+  models.options = NULL,
+  NbRunEval = n.runs, #nÃºmero de repeticoes para cada algoritmo
+  DataSplit = 70,#percentagem de pts para treino.
+  Prevalence = 0.5,
+  VarImport = 0,#caso queira avaliar a importancia das variaveis, mudar para 10 ou 100 permutacoes
+  models.eval.meth = c("TSS", "ROC"),
+  SaveObj = TRUE,
+  rescal.all.models = TRUE,
+  do.full.models = FALSE,
+  modeling.id = "spp_presente"
+)
+# import.var.equal<-data.frame(sppModelOut.PA.equal@variables.importances@val)
+# names(import.var.equal)<-rep(c('GBM','CTA','RF'),n.runs + n.conj.pa2)
+# import.var.equal
+# write.table(import.var.equal,
+#             paste0("./outputs/", especie, "_", "Var.import.PA.equal.csv"), sep = ',')
+
+
+sppModelOut.PA.10000 <- BIOMOD_Modeling(
+  sppBiomodData.PA.10000,
+  models = models2,
+  models.options = myBiomodOption,
+  NbRunEval = n.runs,  #nÃºmero de repetiÃ§Ãµes para cada algoritmo
+  DataSplit = 70, #percentagem de pts para treino.
+  Prevalence = 0.5,
+  VarImport = 0, #caso queira avaliar a importancia das variaveis, mudar para 10 ou 100 permutacoes
+  models.eval.meth = c("TSS", "ROC"),
+  SaveObj = TRUE,
+  rescal.all.models = TRUE,
+  do.full.models = FALSE,
+  modeling.id = "spp_presente"
+)
+
+# import.var.1000<-data.frame(sppModelOut.PA.10000@variables.importances@val)
+# names(import.var.1000)<-rep(c("MAXENT.Phillips", "GLM", "GAM", "ANN", "FDA", "MARS"),n.runs + n.conj.pa2)
+# import.var.1000
+# write.table(import.var.1000,
+#             paste0("./outputs/", especie, "_", "Var.import.PA.1000.csv"), sep = ',')
+
+#---------------------------------#
+# EVALUATE MODELS USING BIOMOD2 ##
+#-------------------------------#
+
+# Sobre as metricas avaliativas,
+# ver http://www.cawcr.gov.au/projects/verification/#Methods_for_dichotomous_forecasts
+
+
+##### Evaluation of Models ####
+sppModelEval.PA.equal <-
+  get_evaluations(sppModelOut.PA.equal)#GBM, CTA e RF
+sppModelEval.PA.equal
+write.table(
+  sppModelEval.PA.equal,
+  paste0("./outputs/", especie, "_", "EvaluationsAll_1.csv")
+)
+
+
+sppModelEval.PA.10000 <-
+  get_evaluations(sppModelOut.PA.10000) #Os demais.
+sppModelEval.PA.10000
+write.table(
+  sppModelEval.PA.10000,
+  paste0("./outputs/", especie, "_", "EvaluationsAll_2.csv")
+)
+
+
+# Sumarizando as mÃ©tricas avaliativas
+sdm.models1 <-models1
+sdm.models1
+eval.methods1 <- c("TSS", "ROC") #2 evaluation methods
+eval.methods1
+
+##### Eval.1 ####
+
+means.i1 <- numeric(0)
+for (i in 1:n.algo1) {
+  m1 <-
+    sppModelEval.PA.equal[paste(eval.methods1[1]), "Testing.data", paste(sdm.models1[i]), ,]
+  means.i1 = c(means.i1, m1) 
+}
+
+summary.eval.equal <-
+  data.frame(rep(sdm.models1, each =  n.runs*n.conj.pa2),
+             rep(1:n.conj.pa2, each = n.runs),
+             rep(1:n.runs, n.algo1),
+             means.i1)
+names(summary.eval.equal) <- c("Model", "PA","Run", "TSS")
+summary.eval.equal
+write.table(
+  summary.eval.equal,
+  paste0("./outputs/", especie, "_", "Models1_Evaluation.csv")
+)
+
+#----------------------------------------------------------------------------------------#
+means.i1 <- numeric(0)
+for (i in 1:n.algo1) {
+  m1 <-
+    sppModelEval.PA.equal[paste(eval.methods1[2]), "Sensitivity", paste(sdm.models1[i]), ,]
+  means.i1 = c(means.i1, m1)
+}
+
+summary.eval.equal.1 <-
+  data.frame(means.i1)
+summary.eval.equal.1
+(test1<-cbind(summary.eval.equal,summary.eval.equal.1))
+names(test1)<-c("Model", "PA","Run","TSS","Se")
+test1
+#----------------------------------------------------------------------------------------#
+
+means.i1.1 <- numeric(0)
+means.j1.1 <- numeric(2)
+for (i in 1:n.algo1){
+  for (j in 1:2){
+    means.j1.1[j] <- mean(sppModelEval.PA.equal[paste(eval.methods1[j]),"Testing.data",paste(sdm.models1[i]),,])
+  }
+  means.i1.1 <- c(means.i1.1, means.j1.1)
+}
+
+summary.eval.equal.mean <- data.frame(rep(sdm.models1,each=j), rep(eval.methods1,i), means.i1.1)
+names(summary.eval.equal.mean) <- c("Model", "Method", "Mean")
+summary.eval.equal.mean
+write.table(summary.eval.equal.mean,
+            paste0("./outputs/", especie, "_", "Models1_Evaluation_Mean.csv"))
+
+sd.i1 <- numeric(0)
+sd.j1 <- numeric(2)
+for (i in 1:n.algo1) {
+  for (j in 1:2) {
+    sd.j1[j] <-
+      sd(sppModelEval.PA.equal[paste(eval.methods1[j]), "Testing.data", paste(sdm.models1[i]), ,])
+  }
+  sd.i1 <- c(sd.i1, sd.j1)
+}
+
+summary.eval.equal.sd <-
+  data.frame(rep(sdm.models1, each = 2), rep(eval.methods1, n.algo1), sd.i1)
+names(summary.eval.equal.sd) <- c("Model", "Method", "SD")
+summary.eval.equal.sd
+write.table(
+  summary.eval.equal.sd,
+  paste0("./outputs/", especie, "_", "Models1_Evaluation_SD.csv")
+)
+
+
+sdm.models2 <-models2 #7 models
+sdm.models2
+eval.methods2 <- c("TSS", "ROC") #2 evaluation methods
+eval.methods2
+
+##### Eval.2 ####
+
+means.i2 <- numeric(0)
+for (i2 in 1:n.algo2) {
+  m2 <-
+    sppModelEval.PA.10000[paste(eval.methods2[1]), "Testing.data", paste(sdm.models2[i2]), ,]
+  means.i2 = c(means.i2, m2)
+}
+
+summary.eval.10000 <-
+  data.frame(rep(sdm.models2, each =  n.runs*n.conj.pa2),
+             rep(1:n.conj.pa2, each = n.runs),
+             rep(1:n.runs, n.algo2),
+             means.i2)
+names(summary.eval.10000) <- c("Model", "PA","Run", "TSS")
+summary.eval.10000
+write.table(
+  summary.eval.10000,
+  paste0("./outputs/", especie, "_", "Models2_Evaluation.csv")
+)
+
+#----------------------------------------------------------------------------------------#
+means.i21 <- numeric(0)
+for (i21 in 1:n.algo2) {
+  m21 <-
+    sppModelEval.PA.10000[paste(eval.methods2[2]), "Sensitivity", paste(sdm.models2[i21]), ,]
+  means.i21 = c(means.i21, m21)
+}
+
+summary.eval.10000.1 <-
+  data.frame(means.i21)
+summary.eval.10000.1
+(test2<-cbind(summary.eval.10000,summary.eval.10000.1))
+names(test2)<-c("Model", "PA","Run","TSS","Se")
+test2
+#----------------------------------------------------------------------------------------#
+
+means.i2.2 <- numeric(0)
+means.j2.2 <- numeric(2)
+for (i in 1:n.algo2){
+  for (j in 1:2){
+    means.j2.2[j] <- mean(sppModelEval.PA.10000[paste(eval.methods2[j]),"Testing.data",paste(sdm.models2[i]),,], na.rm = T)
+  }
+  means.i2.2 <- c(means.i2.2, means.j2.2)
+}
+
+summary.eval.10000.mean <- data.frame(rep(sdm.models2,each=j), rep(eval.methods2,i), means.i2.2)
+names(summary.eval.10000.mean) <- c("Model", "Method", "Mean")
+summary.eval.10000.mean
+write.table(summary.eval.10000.mean,
+            paste0("./outputs/", especie, "_", "Models2_Evaluation_Mean.csv"))
+
+sd.i2 <- numeric(0)
+sd.j2 <- numeric(2)
+for (i in 1:n.algo2) {
+  for (j in 1:2) {
+    sd.j2[j] <-
+      sd(sppModelEval.PA.10000[paste(eval.methods2[j]), "Testing.data", paste(sdm.models2[i]), ,])
+  }
+  sd.i2 <- c(sd.i2, sd.j2)
+}
+
+summary.eval.10000.sd <-
+  data.frame(rep(sdm.models2, each = 2), rep(eval.methods2, n.algo2), sd.i2)
+names(summary.eval.10000.sd) <- c("Model", "Method", "SD")
+summary.eval.10000.sd
+write.table(
+  summary.eval.10000.sd,
+  paste0("./outputs/", especie, "_", "Models2_Evaluation_SD.csv")
+)
+
+
+
+#-----------------------------#
+# BUILDING OF PROJECTIONS ####
+#---------------------------#
+
+spp.projections_1 <- BIOMOD_Projection(
+  modeling.output = sppModelOut.PA.equal,
+  new.env = env.selected,
+  proj.name = "Cur1_presente",
+  selected.models = "all",
+  #binary.meth = "ROC",
+  output.format = ".grd"
+)
+
+spp.projections_2 <- BIOMOD_Projection(
+  modeling.output = sppModelOut.PA.10000,
+  new.env = env.selected,
+  proj.name = "Cur2_presente",
+  selected.models = "all",
+  #binary.meth = "ROC",
+  output.format = ".grd"
+)
+
+# save.image()
+### Definir diretÃ³rio onde estÃ¡ o arquivo proj_Cur1_presente_Occurrence.grd
+projections_1 <-
+  stack(
+    paste0(
+      "./",
+      diretorio,
+      "/proj_Cur1_presente/proj_Cur1_presente_Occurrence.",
+      especie,
+      ".grd"
+    )
+  )
+names(projections_1)
+summary.eval.equal_1<-test1
+x1<-length(na.omit(summary.eval.equal_1$TSS))
+summary.eval.equal_1 <-na.omit(summary.eval.equal_1)
+summary.eval.equal_1 = summary.eval.equal_1[order(summary.eval.equal_1$Run),]
+summary.eval.equal_1 = summary.eval.equal_1[order(summary.eval.equal_1$PA),]
+
+summary.eval.equal_1$ID = 1:x1
+
+sel = summary.eval.equal_1[summary.eval.equal_1[, "TSS"] > 0.400,]
+sel <- na.omit(sel)
+
+projections.1 = (subset(projections_1, sel[, "ID"]))
+proj.select1 <- names(projections.1)
+### Definir diretÃ³rio onde estÃ¡ o arquivo proj_Cur2_presente_Occurrence.grd
+projections_2 <-
+  stack(
+    paste0(
+      "./",
+      diretorio,
+      "/proj_Cur2_presente/proj_Cur2_presente_Occurrence.",
+      especie,
+      ".grd"
+    )
+  )
+names(projections_2)
+summary.eval.10000_1<-test2
+x2<-length(na.omit(summary.eval.10000_1$TSS))
+summary.eval.10000_1 <-na.omit(summary.eval.10000_1)
+summary.eval.10000_1 = summary.eval.10000_1[order(summary.eval.10000_1$Run),]
+summary.eval.10000_1 = summary.eval.10000_1[order(summary.eval.10000_1$PA),]
+summary.eval.10000_1$ID = 1:x2
+
+sel2 = summary.eval.10000_1[summary.eval.10000_1[, "TSS"] > 0.400,]
+sel2 <- na.omit(sel2)
+
+projections.2 = (subset(projections_2, sel2[, "ID"]))
+proj.select2 <- names(projections.2)
+#-----------------------------------------------#
+# Mean of the models by algorithm (Present) ####
+#---------------------------------------------#
+projections.all1 <- stack(projections.1)
+ 
+projections.all2 <- stack(projections.2)
+
+
+#--------------------------------#
+# Ensemble - Current Climate ####
+#------------------------------#
+all.pres<-stack(projections.1, projections.2)
+
+# Regression
+
+RG<-c("GLM", "GAM", "FDA", "MARS")
+fam.reg<-stack()
+for (l in 1:length(RG)) {
+  fam.reg<- stack(fam.reg, subset(all.pres, grep(RG[l], names(all.pres))))
+}
+fam.reg
+fam.reg.m<-mean(fam.reg)
+writeRaster(
+  fam.reg.m,
+  filename = paste0("./outputs/", especie, "_", "Regression - Current Climate.tif"),
+  format = "GTiff",
+  overwrite = TRUE
+)
+
+
+# Machine Learning
+
+MC<-c("MAXENT.Phillips", "RF", "ANN","GBM", "CTA")
+fam.mac<-stack()
+for (l in 1:length(MC)) {
+  fam.mac<- stack(fam.mac, subset(all.pres, grep(MC[l], names(all.pres))))
+}
+fam.mac
+fam.mac.m<-(mean(fam.mac))
+writeRaster(
+  fam.mac.m,
+  filename = paste0("./outputs/", especie, "_", "Machine - Current Climate.tif"),
+  format = "GTiff",
+  overwrite = TRUE
+)
+
+# All
+
+# try({
+projections.all.mean <-
+  mean(fam.reg.m,fam.mac.m) / 1000
+
+writeRaster(
+  projections.all.mean,
+  filename = paste0("./outputs/", especie, "_", "Ensemble - Current Climate.tif"),
+  format = "GTiff",
+  overwrite = TRUE
+)
+# })
+
+
+
 #--------------------------#
 # Scores ROC Threshold ####
 #------------------------#
-          
-          (scores_equal <- get_evaluations(sppModelOut.PA.equal))
-          scores_ROC_equal <-
-            as.numeric(scores_equal["ROC", "Cutoff", , , ])
-          scores_ROC_equal[scores_ROC_equal=='-Inf']<-NA
-          write.table(scores_ROC_equal, paste0("./outputs/",especie, "_", "scores_equal_.csv"))
-          
-          try({ 
-            ##Scores GBM
-            scores_ROC_GBM <-
-              as.numeric(scores_equal["ROC", "Cutoff", "GBM", , ])
-            scores_ROC_GBM[scores_ROC_GBM=="NA"]<--Inf
-            scores_ROC_GBM
-            scores_ROC_GBM <- as.numeric(na.exclude(scores_ROC_GBM))
-            th_GBM <- mean(scores_ROC_GBM) / 10
-            th_GBM
-            write.table(th_GBM, paste0("./outputs/",especie, "_", "scores_ROC_GBM_.csv"))
-          })
-          try({ 
-            ##Scores CTA
-            scores_ROC_CTA <-
-              as.numeric(scores_equal["ROC", "Cutoff", "CTA", , ])
-            scores_ROC_CTA[scores_ROC_CTA=="-Inf"]<-NA
-            scores_ROC_CTA <- na.exclude(scores_ROC_CTA)
-            th_CTA <- mean(scores_ROC_CTA) / 10
-            th_CTA
-            write.table(th_CTA, paste0("./outputs/",especie, "_", "scores_ROC_CTA_.csv"))
-          })
-          try({ 
-            ##Scores RF
-            scores_ROC_RF <-
-              as.numeric(scores_equal["ROC", "Cutoff", "RF", , ])
-            scores_ROC_RF <- na.exclude(scores_ROC_RF)
-            scores_ROC_RF[scores_ROC_RF=="-Inf"]<-NA
-            th_RF <- mean(scores_ROC_RF) / 10
-            th_RF
-            write.table(th_RF, paste0("./outputs/",especie, "_", "scores_ROC_RF_.csv"))
-          })
-          
-          ## Evaluation Scores of the  Projections with PA.10000
-          (scores_10000 <- get_evaluations(sppModelOut.PA.10000))
-          scores_ROC_10000 <-
-            as.numeric(scores_10000["ROC", "Cutoff", , , ])
-          scores_ROC_10000[scores_ROC_10000=='-Inf']<-NA
-          write.table(scores_ROC_10000, paste0("./outputs/",especie, "_", "scores_10000_.csv"))
 
-          
-          try({ 
-            ##Scores GLM
-            scores_ROC_GLM <-
-              as.numeric(scores_10000["ROC", "Cutoff", "GLM", , ])
-            scores_ROC_GLM[scores_ROC_GLM=="-Inf"]<-NA
-            scores_ROC_GLM <- na.exclude(scores_ROC_GLM)
-            th_GLM <- mean(scores_ROC_GLM) / 10
-            th_GLM
-            write.table(th_GLM, paste0("./outputs/",especie, "_", "scores_ROC_GLM_.csv"))
-          })
-          try({ 
-            ##Scores GAM
-            scores_ROC_GAM <-
-              as.numeric(scores_10000["ROC", "Cutoff", "GAM", , ])
-            scores_ROC_GAM[scores_ROC_GAM=="-Inf"]<-NA
-            scores_ROC_GAM <- na.exclude(scores_ROC_GAM)
-            th_GAM <- mean(scores_ROC_GAM) / 10
-            th_GAM
-            write.table(th_GAM, paste0("./outputs/",especie, "_", "scores_ROC_GAM_.csv"))
-          })
-          try({ 
-            ##Scores ANN
-            scores_ROC_ANN <-
-              as.numeric(scores_10000["ROC", "Cutoff", "ANN", , ])
-            scores_ROC_ANN[scores_ROC_ANN=="-Inf"]<-NA
-            scores_ROC_ANN <- na.exclude(scores_ROC_ANN)
-            th_ANN <- mean(scores_ROC_ANN) / 10
-            th_ANN
-            write.table(th_ANN, paste0("./outputs/",especie, "_", "scores_ROC_ANN_.csv"))
-          })
-          # ##Scores SRE
-          # scores_ROC_SRE <-
-          #   as.numeric(scores_10000["ROC", "Cutoff", "SRE", , ])
-          # scores_ROC_SRE[scores_ROC_SRE=="-Inf"]<-NA
-          # scores_ROC_SRE <- na.exclude(scores_ROC_SRE)
-          # th_SRE <- mean(scores_ROC_SRE) / 10
-          # th_SRE
-          # write.table(th_SRE, paste0("./outputs/",especie, "_", "scores_ROC_SRE_.csv"))
-          try({ 
-            ##Scores FDA
-            scores_ROC_FDA <-
-              as.numeric(scores_10000["ROC", "Cutoff", "FDA", , ])
-            scores_ROC_FDA[scores_ROC_FDA=="-Inf"]<-NA
-            scores_ROC_FDA <- na.exclude(scores_ROC_FDA)
-            th_FDA <- mean(scores_ROC_FDA) / 10
-            th_FDA
-            write.table(th_FDA, paste0("./outputs/",especie, "_", "scores_ROC_FDA_.csv"))
-          })
-          try({ 
-            ##Scores MARS
-            scores_ROC_MARS <-
-              as.numeric(scores_10000["ROC", "Cutoff", "MARS", , ])
-            scores_ROC_MARS[scores_ROC_MARS=="-Inf"]<-NA
-            scores_ROC_MARS <- na.exclude(scores_ROC_MARS)
-            th_MARS <- mean(scores_ROC_MARS) / 10
-            th_MARS
-            write.table(th_MARS, paste0("./outputs/",especie, "_", "scores_ROC_MARS_.csv"))
-          })
-          try({ 
-            ##Scores MAXENT.Phillips
-            scores_ROC_MAXENT.Phillips <-
-              as.numeric(scores_10000["ROC", "Cutoff", "MAXENT.Phillips", , ])
-            scores_ROC_MAXENT.Phillips[scores_ROC_MAXENT.Phillips=="-Inf"]<-NA
-            scores_ROC_MAXENT.Phillips <-
-              na.exclude(scores_ROC_MAXENT.Phillips)
-            th_MAXENT.Phillips <-
-              mean(scores_ROC_MAXENT.Phillips) / 10
-            th_MAXENT.Phillips
-            write.table(th_MAXENT.Phillips, paste0("./outputs/",especie, "_", "scores_ROC_MAXENT.Phillips_.csv"))
-          })
-          #Scores mean
-          (th_mean<-mean(c(scores_ROC_10000,scores_ROC_equal), na.rm=T)/10)
-          write.table(th_mean, paste0("./outputs/",especie, "_", "scores_ROC_mean.csv"))
-          
-          #-------------------------------------------------------#
-          # Binary models by each algorithm (Current Climate) ####
-          #-----------------------------------------------------#
-          try({ 
-            projections.binary.RF <- BinaryTransformation(projections.RF.mean, th_RF) #Calcular th
-            class(projections.binary.RF)
-            summary(values(projections.binary.RF))
-            writeRaster(
-              projections.binary.RF,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_RF Binary.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.binary.GBM <- BinaryTransformation(projections.GBM.mean, th_GBM) #Calcular th
-            class(projections.binary.GBM)
-            summary(values(projections.binary.GBM))
-            writeRaster(
-              projections.binary.GBM,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_GBM Binary.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.binary.CTA <- BinaryTransformation(projections.CTA.mean, th_CTA) #Calcular th
-            class(projections.binary.CTA)
-            summary(values(projections.binary.CTA))
-            writeRaster(
-              projections.binary.CTA,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_CTA Binary.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.binary.GLM <- BinaryTransformation(projections.GLM.mean, th_GLM) #Calcular th
-            class(projections.binary.GLM)
-            summary(values(projections.binary.GLM))
-            writeRaster(
-              projections.binary.GLM,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_GLM Binary.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.binary.GAM <- BinaryTransformation(projections.GAM.mean, th_GAM) #Calcular th
-            class(projections.binary.GAM)
-            summary(values(projections.binary.GAM))
-            writeRaster(
-              projections.binary.GAM,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_GAM Binary.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.binary.ANN <- BinaryTransformation(projections.ANN.mean, th_ANN) #Calcular th
-            class(projections.binary.ANN)
-            summary(values(projections.binary.ANN))
-            writeRaster(
-              projections.binary.ANN,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_ANN Binary.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          # try({ 
-          # projections.binary.SRE <- BinaryTransformation(projections.SRE.mean, th_SRE) #Calcular th
-          # class(projections.binary.SRE)
-          # summary(values(projections.binary.SRE))
-          # writeRaster(
-          #   projections.binary.SRE,
-          #   filename = paste0("./outputs/", especie, "_", "Current Climate_SRE Binary.tif"),
-          #   formato = "GTiff",
-          #   overwrite = TRUE
-          # )
-          # })
-          try({ 
-            projections.binary.MARS <- BinaryTransformation(projections.MARS.mean, th_MARS) #Calcular th
-            class(projections.binary.MARS)
-            summary(values(projections.binary.MARS))
-            writeRaster(
-              projections.binary.MARS,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_MARS Binary.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.binary.FDA <- BinaryTransformation(projections.FDA.mean, th_FDA) #Calcular th
-            class(projections.binary.FDA)
-            summary(values(projections.binary.FDA))
-            writeRaster(
-              projections.binary.FDA,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_FDA Binary.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          try({ 
-            projections.binary.MAXENT.Phillips <- BinaryTransformation(projections.MAXENT.Phillips.mean, th_MAXENT.Phillips) #Calcular th
-            class(projections.binary.MAXENT.Phillips)
-            summary(values(projections.binary.MAXENT.Phillips))
-            writeRaster(
-              projections.binary.MAXENT.Phillips,
-              filename = paste0("./outputs/", especie, "_", "Current Climate_MAXENT.Phillips Binary.tif"),
-              formato = "GTiff",
-              overwrite = TRUE
-            )
-          })
-          
-          
-          
-          #---------------------#          
-          # Ensenble Binary ####
-          #-------------------#          
-          
-          projections.binary.all <- BinaryTransformation(projections.all.mean, th_mean)
-          writeRaster(
-            projections.binary.all,
-            filename = paste0("./outputs/", especie, "_","Ensemble Binary - Current Climate.tif"),
-            format = "GTiff",
-            overwrite = TRUE
-          )
+scores_ROC_equal<-subset(sel, select = c(Model, Se))
+scores_ROC_equal[scores_ROC_equal=='-Inf']<-NA
+scores_ROC_equal[scores_ROC_equal=='Inf']<-NA
+scores_ROC_equal<-na.omit(scores_ROC_equal)
+write.table(scores_ROC_equal, paste0("./outputs/",especie, "_", "scores_equal_.csv"))
 
-	#plot(projections.binary.all, col = matlab.like(100), main = "Binary", las = 1)
-       
+
+## Evaluation Scores of the  Projections with PA.10000
+scores_ROC_10000<-subset(sel2, select = c(Model, Se))
+scores_ROC_10000[scores_ROC_10000=='-Inf']<-NA
+scores_ROC_10000[scores_ROC_10000=='Inf']<-NA
+scores_ROC_10000<-na.omit(scores_ROC_10000)
+write.table(scores_ROC_10000, paste0("./outputs/",especie, "_", "scores_10000_.csv"))
+
+
+
+#Scores mean
+t<-rbind(scores_ROC_equal, scores_ROC_10000)
+(score.1<-mean(sel$Se))
+(score.2<-mean(sel2$Se))
+(score.all<-(mean(cbind(score.1,score.2)/100)))
+# write.table(th_mean, paste0("./outputs/",especie, "_", "scores_mean.csv"))
+# Regression
+fam.reg.d<-NULL
+for (l in 1:length(RG)) {
+  fam.reg.d<- rbind(fam.reg.d, subset(t, Model== RG[l], select = c(Model, Se)))
+}
+fam.reg.d.m<-mean(fam.reg.d$Se)
+
+# Machine Learning
+fam.mac.d<-NULL
+for (l in 1:length(MC)) {
+  fam.mac.d<- rbind(fam.mac.d, subset(t, Model== MC[l], select = c(Model, Se)))
+}
+fam.mac.d.m<-mean(fam.mac.d$Se)
+
+# score mean
+(s.m<-mean(fam.reg.d.m,fam.mac.d.m)/100)
+#-------------------------------------------------------#
+# Binary models by each algorithm (Current Climate) ####
+#-----------------------------------------------------#
+{th<- function(x,y){
+  if("RasterLayer" %in% class(x)){ 
+    v<-as.data.frame(x, h=T,xy=F)
+    v[v=='0']<-NA
+    v.l<-na.omit(v)
+    (vlen<-length(v.l))
+    n<-raster::ncell(x)
+    (PR<-vlen/n) # PR
+  }else{ 
+    cat("x need be raste layer object")
+  }
+  if("numeric" %in% class(y)){
+    (Se<-y) #Sencitivity 0 to 1
+    (VDl <- Se-PR)
+  }else stop( # VDI
+    cat("y need be numeric object"))
+  PA <- convertToPA(
+    x,
+    PA.method = "probability",
+    prob.method = "logistic",
+    beta = VDl,
+    alpha = -0.05,
+    plot = T
+  )
+}
+}
+
+
+#---------------------#          
+# Ensenble Binary ####
+#-------------------#
+
+Convert.p<-th(projections.all.mean,s.m)
+projections.binary.all <- Convert.p$pa.raster
+writeRaster(
+  projections.binary.all,
+  filename = paste0("./outputs/", especie, "_","Ensemble Binary - Current Climate.tif"),
+  format = "GTiff",
+  overwrite = TRUE
+)       
 
           #--------------------#          
           # Move the files ####
           #------------------#          
           
 	#install.packages("filesstrings")
-	library(filesstrings)
           results<-list.files(
             "./outputs/",paste0(especie, "_"),
             full.names = TRUE
@@ -1816,7 +1590,7 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           )), (paste0("./outputs/", especie)), overwrite = TRUE)
           
           #--------------------#          
-          # Time Compting ####
+          # Time Computing ####
           #------------------#    
           sink("./outputs/tempo.txt", append = T)
           print(especie)
@@ -1824,4 +1598,4 @@ especie = especies[1] # To model without a loop, remove the '#' from this line a
           sink()
           
         }
-#END.
+#END
